@@ -20,61 +20,61 @@
      (goto-char p)
      result))
 
-(defun backward-up-list-safe ()
+(defun vim-backward-up-list-safe ()
   (when (not (char-equal (char-after (point)) ?\())
     (condition-case nil
 	(backward-up-list)
       (error nil))))
 
-(defun surrounding-sexp-bounds ()
+(defun vim-surrounding-sexp-bounds ()
   (save-point
    (backward-up-list-safe)
    (let ((start (point)))
      (forward-sexp 1)
      (list start (point)))))
 
-(defun kill-surrounding-sexp () ; da(
+(defun vim-kill-surrounding-sexp () ; da(
   "Delete the sexp surrounding point."
   (interactive)
   (pcase (surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-region start end))))
 
-(defun kill-inside-sexp ()	; di(
+(defun vim-kill-inside-sexp ()	; di(
   "Delete inside the sexp surrounding point."
   (interactive)
   (pcase (surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-region (1+ start) (1- end)))))
 
-(defun yank-surrounding-sexp () ; ya(
+(defun vim-yank-surrounding-sexp () ; ya(
   "Yank the sexp surrounding point."
   (interactive)
   (pcase (surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-ring-save start end))))
 
-(defun yank-inside-sexp ()	; yi(
+(defun vim-yank-inside-sexp ()	; yi(
   "Yank the content of sexp surrounding point."
   (interactive)
   (pcase (surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-ring-save (1+ start) (1- end)))))
 
-(defun comment-surrounding-sexp ()
+(defun vim-comment-surrounding-sexp ()
   "Comment the sexp surrounding point."
   (interactive)
   (pcase (surrounding-sexp-bounds)
     (`(,start ,end)
      (comment-region start end))))
 
-(defun insert-line-below () ; o
+(defun vim-insert-line-below () ; o
   "Same as hitting enter at end of line."
   (interactive)
   (move-end-of-line nil)
   (newline-and-indent))
 
-(defun insert-line () ; O
+(defun vim-insert-line () ; O
   "Insert an indented line at the same line as point."
   (interactive)
   (back-to-indentation)
@@ -82,25 +82,25 @@
   (forward-line -1)
   (indent-for-tab-command))
 
-(defun join-line-one-space () ; J
+(defun vim-join-line-one-space () ; J
   (interactive)
   (move-end-of-line 1)
   (kill-line)
   (just-one-space))
 
-(defun join-line-no-space () ; gJ
+(defun vim-join-line-no-space () ; gJ
   (interactive)
   (move-end-of-line 1)
   (kill-line)
   (delete-horizontal-space))
 
-(defun replace-sexp ()
+(defun vim-replace-sexp ()
   (interactive)
   (backward-up-list-safe)
   (yank)
   (kill-sexp))
 
-(defun save-line ()
+(defun vim-save-line ()
   "Copies current line."
   (interactive)
   (save-point
@@ -109,14 +109,14 @@
       (forward-line)
       (kill-ring-save region-start (point)))))
 
-(defun yank-line ()
+(defun vim-yank-line ()
   "Pastes a line."
   (interactive)
   (save-point
     (move-beginning-of-line 1)
     (yank)))
 
-(defun save-end-of-line ()
+(defun vim-save-end-of-line ()
   "Copies from current point to the end of line."
   (interactive)
   (save-point
@@ -124,7 +124,7 @@
      (move-end-of-line 1)
      (kill-ring-save opoint (point)))))
 
-(defun kill-line-at-point ()
+(defun vim-kill-line-at-point ()
   "Deletes line of current point."
   (interactive)
   (save-point
@@ -146,20 +146,20 @@ and functions."
        ,docstring)))
 
 (defvar-keymap vim-binds-map
-  '(("C-x M-k" . kill-surrounding-sexp)
-    ("C-c M-k" . kill-inside-sexp)
-    ("C-x M-w" . yank-surrounding-sexp)
-    ("C-c M-w" . yank-inside-sexp)
-    ("C-x M-;" . comment-surrounding-sexp)
-    ("C-x C-j" . insert-line-below)
-    ("C-x M-j" . insert-line)
-    ("C-x C-k" . join-line-one-space)
-    ("C-c C-k" . join-line-no-space)
-    ("C-x C-y" . replace-sexp)
-    ("C-x M-l" . save-line)
-    ("C-x C-M-l" . yank-line)
-    ("C-c C-e" . save-end-of-line)
-    ("C-x C-M-k" . kill-line-at-point)))
+  '(("C-x w" . vim-kill-surrounding-sexp)
+    ("C-c M-k" . vim-kill-inside-sexp)
+    ("C-x M-w" . vim-yank-surrounding-sexp)
+    ("C-c M-w" . vim-yank-inside-sexp)
+    ("C-x M-;" . vim-comment-surrounding-sexp)
+    ("C-x C-j" . vim-insert-line-below)
+    ("C-x M-j" . vim-insert-line)
+    ("C-x C-k" . vim-join-line-one-space)
+    ("C-c C-k" . vim-join-line-no-space)
+    ("C-x C-y" . vim-replace-sexp)
+    ("C-x M-l" . vim-save-line)
+    ("C-x C-M-l" . vim-yank-line)
+    ("C-c C-e" . vim-save-end-of-line)
+    ("C-x C-M-k" . vim-kill-line-at-point)))
 
 (define-minor-mode vim-binds-mode
   "Minor mode with vim like commands."
@@ -168,5 +168,4 @@ and functions."
   :keymap vim-binds-map)
 
 (provide 'vim-binds-mode)
-
 ;;; vim-binds.el ends here
