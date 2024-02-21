@@ -1,3 +1,5 @@
-#+title vim-binds-mode
+#+title: vim-binds-mode
+#+author: Giorgos Papadokostakis
+#+date: 2024-02-21
 
 Just playing with Elisp. Go away.
