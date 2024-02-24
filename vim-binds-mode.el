@@ -1,4 +1,4 @@
-;;; vim-binds.el --- Vim like commands for emacs -*- lexical-binding: t; -*-
+;;; vim-binds-mode.el --- Vim like commands for emacs -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023 Giorgos Papadokostakis
 
@@ -168,4 +168,4 @@ and functions."
   :keymap vim-binds-map)
 
 (provide 'vim-binds-mode)
-;;; vim-binds.el ends here
+;;; vim-binds-mode.el ends here
