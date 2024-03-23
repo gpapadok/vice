@@ -28,7 +28,7 @@
 
 (defun vim-surrounding-sexp-bounds ()
   (save-point
-   (backward-up-list-safe)
+   (vim-backward-up-list-safe)
    (let ((start (point)))
      (forward-sexp 1)
      (list start (point)))))
@@ -36,35 +36,35 @@
 (defun vim-kill-surrounding-sexp () ; da(
   "Delete the sexp surrounding point."
   (interactive)
-  (pcase (surrounding-sexp-bounds)
+  (pcase (vim-surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-region start end))))
 
 (defun vim-kill-inside-sexp ()	; di(
   "Delete inside the sexp surrounding point."
   (interactive)
-  (pcase (surrounding-sexp-bounds)
+  (pcase (vim-surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-region (1+ start) (1- end)))))
 
 (defun vim-yank-surrounding-sexp () ; ya(
   "Yank the sexp surrounding point."
   (interactive)
-  (pcase (surrounding-sexp-bounds)
+  (pcase (vim-surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-ring-save start end))))
 
 (defun vim-yank-inside-sexp ()	; yi(
   "Yank the content of sexp surrounding point."
   (interactive)
-  (pcase (surrounding-sexp-bounds)
+  (pcase (vim-surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-ring-save (1+ start) (1- end)))))
 
 (defun vim-comment-surrounding-sexp ()
   "Comment the sexp surrounding point."
   (interactive)
-  (pcase (surrounding-sexp-bounds)
+  (pcase (vim-surrounding-sexp-bounds)
     (`(,start ,end)
      (comment-region start end))))
 
@@ -96,7 +96,7 @@
 
 (defun vim-replace-sexp ()
   (interactive)
-  (backward-up-list-safe)
+  (vim-backward-up-list-safe)
   (yank)
   (kill-sexp))
 
