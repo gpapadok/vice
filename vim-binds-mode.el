@@ -13,6 +13,7 @@
 ;; This file is free software.
 
 ;;; Code:
+;; helpers
 (defmacro save-point (&rest body)
   "Returns to the starting position after the execution of `body`."
   `(let ((p (point))
@@ -20,51 +21,65 @@
      (goto-char p)
      result))
 
-(defun vim-backward-up-list-safe ()
+(defmacro defvar-keymap (name keybinds &optional docstring)
+  "Define a keymap dynamic var from an alist of key sequences
+and functions."
+  (let ((map (gensym))
+	(bind (gensym)))
+    `(defvar ,name
+       (let ((,map (make-keymap)))
+	 (dolist (,bind ,keybinds)
+	   (define-key ,map (kbd (car ,bind)) (cdr ,bind)))
+	 ,map)
+       ,docstring)))
+
+(defun backward-up-list-safe ()
   (when (not (char-equal (char-after (point)) ?\())
     (condition-case nil
 	(backward-up-list)
       (error nil))))
 
-(defun vim-surrounding-sexp-bounds ()
+(defun surrounding-sexp-bounds ()
   (save-point
-   (vim-backward-up-list-safe)
+   (backward-up-list-safe)
    (let ((start (point)))
      (forward-sexp 1)
      (list start (point)))))
 
+;; commands
+
 (defun vim-kill-surrounding-sexp () ; da(
   "Delete the sexp surrounding point."
   (interactive)
-  (pcase (vim-surrounding-sexp-bounds)
+  (pcase (surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-region start end))))
 
 (defun vim-kill-inside-sexp ()	; di(
   "Delete inside the sexp surrounding point."
   (interactive)
-  (pcase (vim-surrounding-sexp-bounds)
+  (pcase (surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-region (1+ start) (1- end)))))
 
 (defun vim-yank-surrounding-sexp () ; ya(
   "Yank the sexp surrounding point."
   (interactive)
-  (pcase (vim-surrounding-sexp-bounds)
+  (pcase (surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-ring-save start end))))
 
 (defun vim-yank-inside-sexp ()	; yi(
   "Yank the content of sexp surrounding point."
   (interactive)
-  (pcase (vim-surrounding-sexp-bounds)
+  (pcase (surrounding-sexp-bounds)
     (`(,start ,end)
      (kill-ring-save (1+ start) (1- end)))))
 
 (defun vim-comment-surrounding-sexp ()
   "Comment the sexp surrounding point."
   (interactive)
-  (pcase (vim-surrounding-sexp-bounds)
+  (pcase (surrounding-sexp-bounds)
     (`(,start ,end)
      (comment-region start end))))
 
@@ -96,11 +111,11 @@
 
 (defun vim-replace-sexp ()
   (interactive)
-  (vim-backward-up-list-safe)
+  (backward-up-list-safe)
   (yank)
   (kill-sexp))
 
-(defun vim-save-line ()
+(defun vim-save-line () ; yy
   "Copies current line."
   (interactive)
   (save-point
@@ -109,7 +124,7 @@
       (forward-line)
       (kill-ring-save region-start (point)))))
 
-(defun vim-yank-line ()
+(defun vim-yank-line () ; p
   "Pastes a line."
   (interactive)
   (save-point
@@ -124,7 +139,7 @@
      (move-end-of-line 1)
      (kill-ring-save opoint (point)))))
 
-(defun vim-kill-line-at-point ()
+(defun vim-kill-line-at-point () ; dd
   "Deletes line of current point."
   (interactive)
   (save-point
@@ -133,17 +148,7 @@
      (forward-line)
      (kill-region opoint (point)))))
 
-(defmacro defvar-keymap (name keybinds &optional docstring)
-  "Define a keymap dynamic var from an alist of key sequences
-and functions."
-  (let ((map (gensym))
-	(bind (gensym)))
-    `(defvar ,name
-       (let ((,map (make-keymap)))
-	 (dolist (,bind ,keybinds)
-	   (define-key ,map (kbd (car ,bind)) (cdr ,bind)))
-	 ,map)
-       ,docstring)))
+;;
 
 (defvar-keymap vim-binds-map
   '(("C-x w" . vim-kill-surrounding-sexp)
