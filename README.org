@@ -1,4 +1,4 @@
-#+title: vim-binds-mode
+#+title: vice
 #+author: Giorgos Papadokostakis
 #+date: 2024-02-21
 
