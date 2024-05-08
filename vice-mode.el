@@ -4,7 +4,7 @@
 
 ;; Author: Giorgos Papadokostakis <giorgos.papadokostakis@proton.me>
 ;; Created: 13 December 2023
-;; Name; Vice-mode
+;; Name; Vice
 ;; Version: 0.1.0
 ;; Keywords: vi, commands
 
@@ -19,12 +19,13 @@
 and functions."
   (let ((map (gensym))
 	(bind (gensym)))
-    `(defvar ,name
-       (let ((,map (make-keymap)))
-	 (dolist (,bind ,keybinds)
-	   (define-key ,map (kbd (car ,bind)) (cdr ,bind)))
-	 ,map)
-       ,docstring)))
+    `(progn
+       (defvar ,name nil ,docstring)
+       (setq ,name
+	     (let ((,map (make-keymap)))
+	       (dolist (,bind ,keybinds)
+		 (define-key ,map (kbd (car ,bind)) (cdr ,bind)))
+	       ,map)))))
 
 (defmacro vice--save-point (&rest body)
   "Returns to the starting position after the execution of `body`."
@@ -151,25 +152,25 @@ and functions."
 ;;
 
 (defvar-keymap vice-map
-  '(("C-x w" . vice-kill-surrounding-sexp)
-    ("C-c M-k" . vice-kill-inside-sexp)
-    ("C-x M-w" . vice-yank-surrounding-sexp)
-    ("C-c M-w" . vice-yank-inside-sexp)
-    ("C-x M-;" . vice-comment-surrounding-sexp)
-    ("C-x C-j" . vice-insert-line-below)
-    ("C-x M-j" . vice-insert-line)
-    ("C-x C-k" . vice-join-line-one-space)
-    ("C-c C-k" . vice-join-line-no-space)
-    ("C-x C-y" . vice-replace-sexp)
-    ("C-x M-l" . vice-save-line)
-    ("C-x C-M-l" . vice-yank-line)
-    ("C-c C-e" . vice-save-end-of-line)
-    ("C-x C-M-k" . vice-kill-line-at-point)))
+  '(("C-x v w" . vice-kill-surrounding-sexp)
+    ("C-c v w" . vice-kill-inside-sexp)
+    ("C-x v M-w" . vice-yank-surrounding-sexp)
+    ("C-c v M-w" . vice-yank-inside-sexp)
+    ("C-x v ;" . vice-comment-surrounding-sexp)
+    ("C-x v j" . vice-insert-line-below)
+    ("C-x v M-j" . vice-insert-line)
+    ("C-x v k" . vice-join-line-one-space)
+    ("C-x v M-k" . vice-join-line-no-space)
+    ("C-x v y" . vice-replace-sexp)
+    ("C-x v l" . vice-save-line)
+    ("C-x v M-l" . vice-yank-line)
+    ("C-x v e" . vice-save-end-of-line)
+    ("C-c v l" . vice-kill-line-at-point)))
 
 (define-minor-mode vice-mode
   "Minor mode with vi like commands."
   :global t
-  :lighter " vi"
+  :lighter " vice"
   :keymap vice-map)
 
 (provide 'vice-mode)
