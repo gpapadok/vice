@@ -15,8 +15,7 @@
 ;;; Code:
 ;; helpers
 (defmacro defvar-keymap (name keybinds &optional docstring)
-  "Define a keymap dynamic var from an alist of key sequences
-and functions."
+  "Define a keymap from an alist of sequences and functions."
   (let ((map (gensym))
 	(bind (gensym)))
     `(progn
@@ -28,19 +27,22 @@ and functions."
 	       ,map)))))
 
 (defmacro vice--save-point (&rest body)
-  "Returns to the starting position after the execution of `body`."
+  "Return to the starting position after the execution of BODY."
   `(let ((p (point))
 	 (result (progn ,@body)))
      (goto-char p)
      result))
 
 (defun vice--backward-up-list ()
+  "Like `backward-up-list` but safer.
+Doesn't work on top of a leading paren and doesn't error on top level form."
   (when (not (char-equal (char-after (point)) ?\())
     (condition-case nil
 	(backward-up-list)
       (error nil))))
 
 (defun vice--surrounding-sexp-bounds ()
+  "Return the start and end point of the surrounding sexp."
   (vice--save-point
    (vice--backward-up-list)
    (let ((start (point)))
@@ -98,26 +100,32 @@ and functions."
   (forward-line -1)
   (indent-for-tab-command))
 
-(defun vice-join-line-one-space () ; J
+(defun vice-join-line-one-space ()
+  "Joins current line with next leaving only one space between.
+Like vi J."
   (interactive)
   (move-end-of-line 1)
   (kill-line)
   (just-one-space))
 
-(defun vice-join-line-no-space () ; gJ
+(defun vice-join-line-no-space ()
+  "Joins current line with next leaving no whitespace.
+Like vi gJ."
   (interactive)
   (move-end-of-line 1)
   (kill-line)
   (delete-horizontal-space))
 
 (defun vice-replace-sexp ()
+  "Replace sorrounding sexp by yanking from kill buffer."
   (interactive)
   (vice--backward-up-list)
   (yank)
   (kill-sexp))
 
-(defun vice-save-line () ; yy
-  "Copies current line."
+(defun vice-save-line ()
+  "Copies current line.
+Like vi yy."
   (interactive)
   (vice--save-point
     (move-beginning-of-line 1)
@@ -125,8 +133,9 @@ and functions."
       (forward-line)
       (kill-ring-save region-start (point)))))
 
-(defun vice-yank-line () ; p
-  "Pastes a line."
+(defun vice-yank-line ()
+  "Pastes a line.
+Like vi p."
   (interactive)
   (vice--save-point
     (move-beginning-of-line 1)
@@ -140,8 +149,9 @@ and functions."
      (move-end-of-line 1)
      (kill-ring-save opoint (point)))))
 
-(defun vice-kill-line-at-point () ; dd
-  "Deletes line of current point."
+(defun vice-kill-line-at-point ()
+  "Deletes line of current point.
+Like Vi dd."
   (interactive)
   (vice--save-point
    (move-beginning-of-line 1)
@@ -174,4 +184,4 @@ and functions."
   :keymap vice-map)
 
 (provide 'vice-mode)
-;;; vi-binds-mode.el ends here
+;;; vice-mode.el ends here
