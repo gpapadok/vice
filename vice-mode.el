@@ -51,6 +51,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
 
 ;; commands
 
+;;;###autoload
 (defun vice-kill-surrounding-sexp () ; da(
   "Delete the sexp surrounding point."
   (interactive)
@@ -58,6 +59,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
     (`(,start ,end)
      (kill-region start end))))
 
+;;;###autoload
 (defun vice-kill-inside-sexp ()	; di(
   "Delete inside the sexp surrounding point."
   (interactive)
@@ -65,6 +67,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
     (`(,start ,end)
      (kill-region (1+ start) (1- end)))))
 
+;;;###autoload
 (defun vice-yank-surrounding-sexp () ; ya(
   "Yank the sexp surrounding point."
   (interactive)
@@ -72,6 +75,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
     (`(,start ,end)
      (kill-ring-save start end))))
 
+;;;###autoload
 (defun vice-yank-inside-sexp ()	; yi(
   "Yank the content of sexp surrounding point."
   (interactive)
@@ -79,6 +83,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
     (`(,start ,end)
      (kill-ring-save (1+ start) (1- end)))))
 
+;;;###autoload
 (defun vice-comment-surrounding-sexp ()
   "Comment the sexp surrounding point."
   (interactive)
@@ -86,12 +91,14 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
     (`(,start ,end)
      (comment-region start end))))
 
+;;;###autoload
 (defun vice-insert-line-below () ; o
   "Same as hitting enter at end of line."
   (interactive)
   (move-end-of-line nil)
   (newline-and-indent))
 
+;;;###autoload
 (defun vice-insert-line () ; O
   "Insert an indented line at the same line as point."
   (interactive)
@@ -100,6 +107,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
   (forward-line -1)
   (indent-for-tab-command))
 
+;;;###autoload
 (defun vice-join-line-one-space ()
   "Joins current line with next leaving only one space between.
 Like vi J."
@@ -108,6 +116,7 @@ Like vi J."
   (kill-line)
   (just-one-space))
 
+;;;###autoload
 (defun vice-join-line-no-space ()
   "Joins current line with next leaving no whitespace.
 Like vi gJ."
@@ -116,6 +125,7 @@ Like vi gJ."
   (kill-line)
   (delete-horizontal-space))
 
+;;;###autoload
 (defun vice-replace-sexp ()
   "Replace sorrounding sexp by yanking from kill buffer."
   (interactive)
@@ -123,6 +133,7 @@ Like vi gJ."
   (yank)
   (kill-sexp))
 
+;;;###autoload
 (defun vice-save-line ()
   "Copies current line.
 Like vi yy."
@@ -133,6 +144,7 @@ Like vi yy."
       (forward-line)
       (kill-ring-save region-start (point)))))
 
+;;;###autoload
 (defun vice-yank-line ()
   "Pastes a line.
 Like vi p."
@@ -141,6 +153,7 @@ Like vi p."
     (move-beginning-of-line 1)
     (yank)))
 
+;;;###autoload
 (defun vice-save-end-of-line ()
   "Copies from current point to the end of line."
   (interactive)
@@ -149,6 +162,7 @@ Like vi p."
      (move-end-of-line 1)
      (kill-ring-save opoint (point)))))
 
+;;;###autoload
 (defun vice-kill-line-at-point ()
   "Deletes line of current point.
 Like Vi dd."
@@ -177,6 +191,7 @@ Like Vi dd."
     ("C-x v e" . vice-save-end-of-line)
     ("C-c v l" . vice-kill-line-at-point)))
 
+;;;###autoload
 (define-minor-mode vice-mode
   "Minor mode with vi like commands."
   :global t
