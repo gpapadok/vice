@@ -44,10 +44,13 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
 (defun vice--surrounding-sexp-bounds ()
   "Return the start and end point of the surrounding sexp."
   (vice--save-point
-   (vice--backward-up-list)
-   (let ((start (point)))
-     (forward-sexp 1)
-     (list start (point)))))
+   (let ((p (point)))
+     (vice--backward-up-list)
+     (let ((start (point)))
+       (unless (and (= p start)
+                    (not (char-equal (char-after start) ?\())) ; Only if inside a sexp
+         (forward-sexp 1))
+       (list start (point))))))
 
 ;; commands
 
@@ -65,7 +68,8 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
   (interactive)
   (pcase (vice--surrounding-sexp-bounds)
     (`(,start ,end)
-     (kill-region (1+ start) (1- end)))))
+     (if (< start end)
+         (kill-region (1+ start) (1- end))))))
 
 ;;;###autoload
 (defun vice-yank-surrounding-sexp () ; ya(
