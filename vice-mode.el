@@ -1,4 +1,4 @@
-;;; vice-mode.el --- Vi like commands extension for emacs -*- lexical-binding: t; -*-
+;;; vice-mode.el --- VIm Like Commands Extension for emacs -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023 Giorgos Papadokostakis
 

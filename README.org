@@ -2,4 +2,120 @@
 #+author: Giorgos Papadokostakis
 #+date: 2024-02-21
 
-Just playing with Elisp. Go away.
+~vice~ (VIm-like Commands Extension for Emacs) is a package of
+additional Vim-like commands for Emacs.
+
+It is an alternative to existing Emacs extensions to emulate vim, that
+adds on top of the vanilla text navigation flow without completely
+revamping Emacs keybinds. It attempts to complement Emacs with Vim
+commands that are missing or are too key-verbose with the default
+Emacs keybinds.
+
+** Installation
+
+With ~use-package~ and straight.el.
+
+#+begin_src elisp
+(use-package vice-mode
+  :straight (vice
+			 :host github
+			 :repo "gpapadok/vice"
+			 :local-repo "vice"
+			 :branch "master"
+			 :files (:defaults "vice-mode.el"))
+  :config (vice-mode))
+#+end_src
+
+Otherwise clone the repo and add it to your load path.
+
+#+begin_src elisp
+(add-to-list 'load-path "/path/to/vice")
+(require 'vice-mode)
+#+end_src
+
+** Commands
+
+*** ~vice-kill-surrounding-sexp~
+
+Deletes a surrounding balanced expression.
+
+Like vim ~da(~ command. Default bind ~C-x v w~ .
+
+*** ~vice-kill-inside-sexp~
+
+Deletes the contents of a surrounding balanced expression.
+
+Like vim ~di(~ command. Default bind ~C-c v w~ .
+
+*** ~vice-yank-surrounding-sexp~
+
+Saves the surrounding balanced expression to the kill ring.
+
+Like vim ~ya(~ command. Default bind ~C-x v M-w~.
+
+*** ~vice-yank-inside-sexp~
+
+Saves the contents of the surrounding balanced expression in the kill ring.
+
+Like vim ~yi(~ command. Default bind ~C-c v M-w~.
+
+*** ~vice-comment-surrounding-sexp~
+
+Comments the surrounding balanced expression.
+
+Default bind ~C-x v ;~.
+
+*** ~vice-insert-line-below~
+
+Inserts a line below the current line.
+
+Like vim ~o~. Default bind ~C-x v j~.
+
+*** ~vice-insert-line~
+
+Inserts a line above the current line.
+
+Like vim ~O~. Default bind ~C-x v M-j~.
+
+*** ~vice-join-line-one-space~
+
+Joins the current line with the next with one space in between.
+
+Default bind ~C-x v k~.
+
+*** ~vice-join-line-no-space~
+
+Joins the current line with the next without empty space.
+
+Default bind ~C-x v M-k~.
+
+*** ~vice-replace-sexp~
+
+Replaces the balanced expression surrounding point with the first
+one in the kill ring.
+
+Default bind ~C-x v y~.
+
+*** ~vice-save-line~
+
+Saves the line at point to the kill ring.
+
+Like vim ~yy~. Default bind ~C-x v l~.
+
+*** ~vice-yank-line~
+
+Pastes a saved line above the current.
+
+Like vim ~p~. Default bind ~C-x v M-l~.
+
+*** ~vice-save-end-of-line~
+
+Saves the current line from point to the end to the kill ring.
+
+Like vim ~y S-$~. Default bind ~C-x v e~.
+
+*** ~vice-kill-line-at-point~
+
+Kills the line at point.
+
+Like vim ~dd~. Default bind ~C-c v l~.
