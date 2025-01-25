@@ -13,23 +13,25 @@
 ;; This file is free software.
 
 ;;; Code:
+
 ;; helpers
+
 (defmacro defvar-keymap (name keybinds &optional docstring)
   "Define a keymap from an alist of sequences and functions."
   (let ((map (gensym))
-	(bind (gensym)))
+        (bind (gensym)))
     `(progn
        (defvar ,name nil ,docstring)
        (setq ,name
-	     (let ((,map (make-keymap)))
-	       (dolist (,bind ,keybinds)
-		 (define-key ,map (kbd (car ,bind)) (cdr ,bind)))
-	       ,map)))))
+             (let ((,map (make-keymap)))
+               (dolist (,bind ,keybinds)
+                 (define-key ,map (kbd (car ,bind)) (cdr ,bind)))
+               ,map)))))
 
 (defmacro vice--save-point (&rest body)
   "Return to the starting position after the execution of BODY."
   `(let ((p (point))
-	 (result (progn ,@body)))
+         (result (progn ,@body)))
      (goto-char p)
      result))
 
@@ -38,7 +40,7 @@
 Doesn't work on top of a leading paren and doesn't error on top level form."
   (when (not (char-equal (char-after (point)) ?\())
     (condition-case nil
-	(backward-up-list)
+        (backward-up-list)
       (error nil))))
 
 (defun vice--surrounding-sexp-bounds ()
@@ -63,7 +65,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
      (kill-region start end))))
 
 ;;;###autoload
-(defun vice-kill-inside-sexp ()	; di(
+(defun vice-kill-inside-sexp () ; di(
   "Delete inside the sexp surrounding point."
   (interactive)
   (pcase (vice--surrounding-sexp-bounds)
@@ -80,7 +82,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
      (kill-ring-save start end))))
 
 ;;;###autoload
-(defun vice-yank-inside-sexp ()	; yi(
+(defun vice-yank-inside-sexp () ; yi(
   "Yank the content of sexp surrounding point."
   (interactive)
   (pcase (vice--surrounding-sexp-bounds)
@@ -143,10 +145,10 @@ Like vi gJ."
 Like vi yy."
   (interactive)
   (vice--save-point
-    (move-beginning-of-line 1)
-    (let ((region-start (point)))
-      (forward-line)
-      (kill-ring-save region-start (point)))))
+   (move-beginning-of-line 1)
+   (let ((region-start (point)))
+     (forward-line)
+     (kill-ring-save region-start (point)))))
 
 ;;;###autoload
 (defun vice-yank-line ()
@@ -154,8 +156,8 @@ Like vi yy."
 Like vi p."
   (interactive)
   (vice--save-point
-    (move-beginning-of-line 1)
-    (yank)))
+   (move-beginning-of-line 1)
+   (yank)))
 
 ;;;###autoload
 (defun vice-save-end-of-line ()
