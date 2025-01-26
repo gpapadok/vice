@@ -199,7 +199,7 @@ Like Vi dd."
 
 ;;;###autoload
 (define-minor-mode vice-mode
-  "Minor mode with vi like commands."
+  "Minor mode with Vi like commands."
   :global t
   :lighter " vice"
   :keymap vice-map)
