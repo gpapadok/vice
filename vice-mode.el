@@ -182,20 +182,20 @@ Like Vi dd."
 ;;
 
 (defvar-keymap vice-map
-  '(("C-x v w" . vice-kill-surrounding-sexp)
-    ("C-c v w" . vice-kill-inside-sexp)
-    ("C-x v M-w" . vice-yank-surrounding-sexp)
-    ("C-c v M-w" . vice-yank-inside-sexp)
-    ("C-x v ;" . vice-comment-surrounding-sexp)
-    ("C-x v j" . vice-insert-line-below)
-    ("C-x v M-j" . vice-insert-line)
-    ("C-x v k" . vice-join-line-one-space)
-    ("C-x v M-k" . vice-join-line-no-space)
-    ("C-x v y" . vice-replace-sexp)
+  '(("C-c v w" . vice-kill-surrounding-sexp)
+    ("C-x v w" . vice-kill-inside-sexp)
+    ("C-c v M-w" . vice-yank-surrounding-sexp)
+    ("C-x v M-w" . vice-yank-inside-sexp)
+    ("C-c v ;" . vice-comment-surrounding-sexp)
+    ("C-c v j" . vice-insert-line-below)
+    ("C-c v M-j" . vice-insert-line)
+    ("C-c v k" . vice-join-line-one-space)
+    ("C-c v M-k" . vice-join-line-no-space)
+    ("C-c v y" . vice-replace-sexp)
+    ("C-c v l" . vice-kill-line-at-point)
     ("C-x v l" . vice-save-line)
-    ("C-x v M-l" . vice-yank-line)
-    ("C-x v e" . vice-save-end-of-line)
-    ("C-c v l" . vice-kill-line-at-point)))
+    ("C-c v M-l" . vice-yank-line)
+    ("C-c v e" . vice-save-end-of-line)))
 
 ;;;###autoload
 (define-minor-mode vice-mode
