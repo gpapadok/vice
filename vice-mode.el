@@ -87,7 +87,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
          (kill-region (1+ start) (1- end))))))
 
 ;;;###autoload
-(defun vice-yank-surrounding-sexp () ; ya(
+(defun vice-save-surrounding-sexp () ; ya(
   "Yank the sexp surrounding point."
   (interactive)
   (pcase (vice--surrounding-sexp-bounds)
@@ -95,7 +95,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
      (kill-ring-save start end))))
 
 ;;;###autoload
-(defun vice-yank-inside-sexp () ; yi(
+(defun vice-save-inside-sexp () ; yi(
   "Yank the content of sexp surrounding point."
   (interactive)
   (pcase (vice--surrounding-sexp-bounds)
@@ -197,8 +197,8 @@ Like Vi dd."
 (vice--defvar-keymap vice-map
   '(("w" . vice-kill-surrounding-sexp)
     ("C-w" . vice-kill-inside-sexp)
-    ("M-w" . vice-yank-surrounding-sexp)
-    ("M-W" . vice-yank-inside-sexp)
+    ("M-w" . vice-save-surrounding-sexp)
+    ("M-W" . vice-save-inside-sexp)
     (";" . vice-comment-surrounding-sexp)
     ("j" . vice-insert-line-below)
     ("M-j" . vice-insert-line)
