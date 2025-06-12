@@ -198,7 +198,7 @@ Like Vi dd."
   '(("w" . vice-kill-surrounding-sexp)
     ("C-w" . vice-kill-inside-sexp)
     ("M-w" . vice-yank-surrounding-sexp)
-    ("C-w" . vice-yank-inside-sexp)
+    ("M-W" . vice-yank-inside-sexp)
     (";" . vice-comment-surrounding-sexp)
     ("j" . vice-insert-line-below)
     ("M-j" . vice-insert-line)
@@ -207,7 +207,7 @@ Like Vi dd."
     ("y" . vice-replace-sexp)
     ("l" . vice-kill-line-at-point)
     ("M-l" . vice-save-line)
-    ("M-l" . vice-yank-line)
+    ("C-l" . vice-yank-line)
     ("e" . vice-save-end-of-line)))
 
 ;;;###autoload
