@@ -14,9 +14,22 @@
 
 ;;; Code:
 
-;; helpers
+;; Custom
 
-(defmacro defvar-keymap (name keybinds &optional docstring)
+(defgroup vice nil
+  "Manipulate text with Vim-like commands."
+  :group 'convenience
+  :prefix "vice-")
+
+(defcustom vice-key-prefix "C-c v"
+  "Key prefix for vice commands.")
+
+;; Helpers
+
+(defun vice--key (key)
+  (kbd (concat vice-key-prefix " " key)))
+
+(defmacro vice--defvar-keymap (name keybinds &optional docstring)
   "Define a keymap from an alist of sequences and functions."
   (let ((map (gensym))
         (bind (gensym)))
@@ -25,7 +38,7 @@
        (setq ,name
              (let ((,map (make-keymap)))
                (dolist (,bind ,keybinds)
-                 (define-key ,map (kbd (car ,bind)) (cdr ,bind)))
+                 (define-key ,map (vice--key (car ,bind)) (cdr ,bind)))
                ,map)))))
 
 (defmacro vice--save-point (&rest body)
@@ -54,7 +67,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
          (forward-sexp 1))
        (list start (point))))))
 
-;; commands
+;; Commands
 
 ;;;###autoload
 (defun vice-kill-surrounding-sexp () ; da(
@@ -179,23 +192,23 @@ Like Vi dd."
      (forward-line)
      (kill-region opoint (point)))))
 
-;;
+;; Minor mode
 
-(defvar-keymap vice-map
-  '(("C-c v w" . vice-kill-surrounding-sexp)
-    ("C-x v w" . vice-kill-inside-sexp)
-    ("C-c v M-w" . vice-yank-surrounding-sexp)
-    ("C-x v M-w" . vice-yank-inside-sexp)
-    ("C-c v ;" . vice-comment-surrounding-sexp)
-    ("C-c v j" . vice-insert-line-below)
-    ("C-c v M-j" . vice-insert-line)
-    ("C-c v k" . vice-join-line-one-space)
-    ("C-c v M-k" . vice-join-line-no-space)
-    ("C-c v y" . vice-replace-sexp)
-    ("C-c v l" . vice-kill-line-at-point)
-    ("C-x v l" . vice-save-line)
-    ("C-c v M-l" . vice-yank-line)
-    ("C-c v e" . vice-save-end-of-line)))
+(vice--defvar-keymap vice-map
+  '(("w" . vice-kill-surrounding-sexp)
+    ("C-w" . vice-kill-inside-sexp)
+    ("M-w" . vice-yank-surrounding-sexp)
+    ("C-w" . vice-yank-inside-sexp)
+    (";" . vice-comment-surrounding-sexp)
+    ("j" . vice-insert-line-below)
+    ("M-j" . vice-insert-line)
+    ("k" . vice-join-line-one-space)
+    ("M-k" . vice-join-line-no-space)
+    ("y" . vice-replace-sexp)
+    ("l" . vice-kill-line-at-point)
+    ("M-l" . vice-save-line)
+    ("M-l" . vice-yank-line)
+    ("e" . vice-save-end-of-line)))
 
 ;;;###autoload
 (define-minor-mode vice-mode
