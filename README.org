@@ -3,7 +3,8 @@
 #+date: 2024-02-21
 
 ~vice~ (VIm-like Commands Extension for Emacs) is a package of
-additional Vim-like commands for Emacs.
+additional commands for Emacs that attempt to emulate the simplicity
+of text processing with Vim.
 
 It is an alternative to existing Emacs extensions to emulate vim, that
 adds on top of the vanilla text navigation flow without completely
@@ -16,21 +17,22 @@ Emacs keybinds.
 With ~use-package~ and straight.el.
 
 #+begin_src elisp
-(use-package vice-mode
-  :straight (vice
-			 :host github
-			 :repo "gpapadok/vice"
-			 :local-repo "vice"
-			 :branch "master"
-			 :files (:defaults "vice-mode.el"))
-  :config (vice-mode))
+  (use-package vice-mode
+    :straight (vice
+               :host github
+               :repo "gpapadok/vice"
+               :local-repo "vice"
+               :branch "master"
+               :files (:defaults "vice-mode.el"))
+    :config (vice-mode))
 #+end_src
 
 Otherwise clone the repo and add it to your load path.
 
 #+begin_src elisp
-(add-to-list 'load-path "/path/to/vice")
-(require 'vice-mode)
+  (add-to-list 'load-path "/path/to/vice")
+  (require 'vice-mode)
+  (vice-mode 1)
 #+end_src
 
 ** Commands
@@ -39,80 +41,80 @@ Otherwise clone the repo and add it to your load path.
 
 Deletes a surrounding balanced expression.
 
-Like vim ~da(~ command. Default bind ~C-x v w~ .
+Like vim ~da(~ command. Default bind ~C-c v w~ .
 
 *** ~vice-kill-inside-sexp~
 
 Deletes the contents of a surrounding balanced expression.
 
-Like vim ~di(~ command. Default bind ~C-c v w~ .
+Like vim ~di(~ command. Default bind ~C-c v C-w~ .
 
 *** ~vice-yank-surrounding-sexp~
 
 Saves the surrounding balanced expression to the kill ring.
 
-Like vim ~ya(~ command. Default bind ~C-x v M-w~.
+Like vim ~ya(~ command. Default bind ~C-c v M-w~.
 
 *** ~vice-yank-inside-sexp~
 
 Saves the contents of the surrounding balanced expression in the kill ring.
 
-Like vim ~yi(~ command. Default bind ~C-c v M-w~.
+Like vim ~yi(~ command. Default bind ~C-c v M-W~.
 
 *** ~vice-comment-surrounding-sexp~
 
 Comments the surrounding balanced expression.
 
-Default bind ~C-x v ;~.
+Default bind ~C-c v ;~.
 
 *** ~vice-insert-line-below~
 
 Inserts a line below the current line.
 
-Like vim ~o~. Default bind ~C-x v j~.
+Like vim ~o~. Default bind ~C-c v j~.
 
 *** ~vice-insert-line~
 
 Inserts a line above the current line.
 
-Like vim ~O~. Default bind ~C-x v M-j~.
+Like vim ~O~. Default bind ~C-c v M-j~.
 
 *** ~vice-join-line-one-space~
 
 Joins the current line with the next with one space in between.
 
-Default bind ~C-x v k~.
+Default bind ~C-c v k~.
 
 *** ~vice-join-line-no-space~
 
 Joins the current line with the next without empty space.
 
-Default bind ~C-x v M-k~.
+Default bind ~C-c v M-k~.
 
 *** ~vice-replace-sexp~
 
 Replaces the balanced expression surrounding point with the first
 one in the kill ring.
 
-Default bind ~C-x v y~.
+Default bind ~C-c v y~.
 
 *** ~vice-save-line~
 
 Saves the line at point to the kill ring.
 
-Like vim ~yy~. Default bind ~C-x v l~.
+Like vim ~yy~. Default bind ~C-c v M-l~.
 
 *** ~vice-yank-line~
 
 Pastes a saved line above the current.
 
-Like vim ~p~. Default bind ~C-x v M-l~.
+Like vim ~p~. Default bind ~C-c v M-l~.
 
 *** ~vice-save-end-of-line~
 
 Saves the current line from point to the end to the kill ring.
 
-Like vim ~y S-$~. Default bind ~C-x v e~.
+Like vim ~y S-$~. Default bind ~C-c v e~.
 
 *** ~vice-kill-line-at-point~
 
