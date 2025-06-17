@@ -110,11 +110,17 @@ Pastes a saved line above the current.
 
 Like vim ~p~. Default bind ~C-c v M-l~.
 
+*** ~vice-kill-end-of-line~
+
+Deletes the current line from point to the end to the kill ring.
+
+Like vim ~d S-$~. Default bind ~C-c v e~.
+
 *** ~vice-save-end-of-line~
 
 Saves the current line from point to the end to the kill ring.
 
-Like vim ~y S-$~. Default bind ~C-c v e~.
+Like vim ~y S-$~. Default bind ~C-c v M-e~.
 
 *** ~vice-kill-line-at-point~
 

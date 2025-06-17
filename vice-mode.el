@@ -173,6 +173,15 @@ Like vi p."
    (yank)))
 
 ;;;###autoload
+(defun vice-kill-end-of-line ()
+  "Deletes from current point to the end of line."
+  (interactive)
+  (vice--save-point
+   (let ((opoint (point)))
+     (move-end-of-line 1)
+     (kill-region opoint (point)))))
+
+;;;###autoload
 (defun vice-save-end-of-line ()
   "Copies from current point to the end of line."
   (interactive)
@@ -208,7 +217,8 @@ Like Vi dd."
     ("l" . vice-kill-line-at-point)
     ("M-l" . vice-save-line)
     ("C-l" . vice-yank-line)
-    ("e" . vice-save-end-of-line)))
+    ("e" . vice-kill-end-of-line)
+    ("M-e" . vice-save-end-of-line)))
 
 ;;;###autoload
 (define-minor-mode vice-mode
