@@ -1,3 +1,15 @@
+;;; vice-mode-test.el --- Tests for vice commands -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2023 Giorgos Papadokostakis
+
+;; Author: Giorgos Papadokostakis <giorgos.papadokostakis@proton.me>
+
+;; This file is not part of GNU Emacs.
+
+;; This file is free software.
+
+;;; Code:
+
 (require 'vice-mode)
 
 (defmacro test-with (fn at position before -> after)
@@ -55,3 +67,5 @@
     ->
     "(defun inc (n)
   (+ n 1))"))
+
+;;; vice-mode-test.el ends here
