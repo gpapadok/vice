@@ -13,6 +13,11 @@
 (require 'vice-mode)
 
 (defmacro test-with (fn at position before -> after)
+  "Helper macro to easily test functions that operate on text.
+Simple syntax to apply operation `FN` `AT` `POSITION` on `BEFORE`
+text and test equality of result with `AFTER`.
+Example use:
+\(test-with #'upcase-word at 0 \"hello\" -> \"HELLO\"\)"
   (if (or (not (eql at 'at)) (not (eql -> '->)))
       (error "Malformed test-with form")
     `(with-temp-buffer
@@ -22,6 +27,9 @@
        (should (string= (buffer-string) ,after)))))
 
 (defmacro multiple-tests-with (fn &rest tests)
+  "Helper macro to test a function on multiple before after text pairs.
+Basically extends `test-with` to test an operator `FN` on multiple
+before after pairs \(`TESTS`\)"
   `(progn
      ,@(mapcar (lambda (test)
                  `(test-with ,fn
