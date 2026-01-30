@@ -12,6 +12,16 @@
 
 ;; This file is free software.
 
+;;; Commentary:
+
+;; Vice is an attempt to close the gap between Emacs vanilla keybinds
+;; and the fluidity some of Vi commands give.  Primarily, it is
+;; supposed to make it easier to manipulate structured expressions.
+;; All operations that vice provides are possible with Emacs vanilla
+;; commands but may require multiple operations and can often feel
+;; clunky.  Vice is meant to make a lot of common text editing
+;; operations feel streamlined and smooth.
+
 ;;; Code:
 
 ;; Custom
