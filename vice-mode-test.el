@@ -76,6 +76,16 @@ before after pairs \(TESTS\)"
       (should (null kill-ring))
       (should (string= (buffer-string) "     (foo (bar a b c))")))))
 
+(ert-deftest vice-replace-sexp-outside-test ()
+  "Regression: replacing outside any list must not alter the buffer."
+  (with-temp-buffer
+    (insert "  (foo bar)")
+    (goto-char 1)
+    (let ((kill-ring '("XXX"))
+          kill-ring-yank-pointer)
+      (vice-replace-sexp)
+      (should (string= (buffer-string) "  (foo bar)")))))
+
 (ert-deftest vice-kill-line-at-point-test ()
   (test-with #'vice-kill-line-at-point
     at 17

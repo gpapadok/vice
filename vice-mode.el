@@ -157,11 +157,14 @@ Like vi gJ."
 
 ;;;###autoload
 (defun vice-replace-sexp ()
-  "Replace sorrounding sexp by yanking from kill buffer."
+  "Replace surrounding sexp by yanking from the kill ring."
   (interactive)
-  (vice--backward-up-list)
-  (yank)
-  (kill-sexp))
+  (pcase (vice--surrounding-sexp-bounds)
+    (`(,start ,end)
+     (when (< start end)
+       (goto-char start)
+       (yank)
+       (kill-sexp)))))
 
 ;;;###autoload
 (defun vice-save-line ()
