@@ -4,7 +4,7 @@
 
 ;; Author: Giorgos Papadokostakis <giorgos.papadokostakis@proton.me>
 ;; Created: 13 December 2023
-;; Name; Vice
+;; Name: Vice
 ;; Version: 0.1.0
 ;; Keywords: vi, commands
 
@@ -98,7 +98,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
 
 ;;;###autoload
 (defun vice-save-surrounding-sexp () ; ya(
-  "Yank the sexp surrounding point."
+  "Saves the sexp surrounding point to the kill ring."
   (interactive)
   (pcase (vice--surrounding-sexp-bounds)
     (`(,start ,end)
@@ -106,7 +106,7 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
 
 ;;;###autoload
 (defun vice-save-inside-sexp () ; yi(
-  "Yank the content of sexp surrounding point."
+  "Saves the content of the sexp surrounding point to the kill ring."
   (interactive)
   (pcase (vice--surrounding-sexp-bounds)
     (`(,start ,end)
@@ -165,7 +165,7 @@ Like vi gJ."
 
 ;;;###autoload
 (defun vice-save-line ()
-  "Copies current line.
+  "Saves the current line to the kill ring.
 Like vi yy."
   (interactive)
   (vice--save-point
@@ -194,7 +194,7 @@ Like vi p."
 
 ;;;###autoload
 (defun vice-save-end-of-line ()
-  "Copies from current point to the end of line."
+  "Saves from point to the end of line to the kill ring."
   (interactive)
   (vice--save-point
    (let ((opoint (point)))
