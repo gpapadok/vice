@@ -66,6 +66,16 @@ before after pairs \(TESTS\)"
                (yank))
     at 2 "(foo (bar a b c))" -> "foo (bar a b c)(foo (bar a b c))"))
 
+(ert-deftest vice-save-inside-sexp-outside-test ()
+  "Regression: saving inside a sexp outside any list must not error."
+  (with-temp-buffer
+    (insert "     (foo (bar a b c))")
+    (goto-char 2)
+    (let (kill-ring kill-ring-yank-pointer)
+      (vice-save-inside-sexp)
+      (should (null kill-ring))
+      (should (string= (buffer-string) "     (foo (bar a b c))")))))
+
 (ert-deftest vice-kill-line-at-point-test ()
   (test-with #'vice-kill-line-at-point
     at 17

@@ -110,7 +110,8 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
   (interactive)
   (pcase (vice--surrounding-sexp-bounds)
     (`(,start ,end)
-     (kill-ring-save (1+ start) (1- end)))))
+     (if (< start end)
+         (kill-ring-save (1+ start) (1- end))))))
 
 ;;;###autoload
 (defun vice-comment-surrounding-sexp ()
