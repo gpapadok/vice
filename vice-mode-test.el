@@ -52,16 +52,16 @@ before after pairs \(TESTS\)"
     (at 2 "(foo (bar a b c))" -> "()")  ; inside higher level sexp
     (at 2 "     (foo (bar a b c)))" -> "     (foo (bar a b c)))"))) ; outside sexp
 
-(ert-deftest vice-yank-surrounding-sexp-test ()
+(ert-deftest vice-save-surrounding-sexp-test ()
   (test-with (lambda ()
-               (vice-yank-surrounding-sexp)
+               (vice-save-surrounding-sexp)
                (end-of-buffer)
                (yank))
     at 8 "(foo (bar a b c))" -> "(foo (bar a b c))(bar a b c)"))
 
-(ert-deftest vice-yank-inside-sexp-test ()
+(ert-deftest vice-save-inside-sexp-test ()
   (test-with (lambda ()
-               (vice-yank-inside-sexp)
+               (vice-save-inside-sexp)
                (beginning-of-buffer)
                (yank))
     at 2 "(foo (bar a b c))" -> "foo (bar a b c)(foo (bar a b c))"))
