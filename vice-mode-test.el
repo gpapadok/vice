@@ -72,6 +72,46 @@ Run in a temp buffer holding BEFORE with point at POSITION, in
   (should (null (vice-test--pair-bounds "  foo bar" 4 'a)))
   (should (null (vice-test--pair-bounds "(foo bar)" 10 'a))))
 
+(defun vice-test--object-bounds (before position object modifier &optional count)
+  "Return `vice--object-bounds' for OBJECT MODIFIER COUNT.
+Run in an `emacs-lisp-mode' temp buffer holding BEFORE with point at
+POSITION, so brackets carry paren syntax and \"\\\"\" carries string
+syntax."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert before)
+    (goto-char position)
+    (vice--object-bounds object modifier count)))
+
+(ert-deftest vice--object-bounds-pair-test ()
+  ;; Delimiter objects route through vice--pair-bounds; ) resolves the
+  ;; same pair as (, and m takes the nearest pair of any type.
+  (let ((s "(foo [bar])"))
+    (should (equal (vice-test--object-bounds s 8 ?\( 'a) '(1 12)))
+    (should (equal (vice-test--object-bounds s 8 ?\) 'a) '(1 12)))
+    (should (equal (vice-test--object-bounds s 8 ?m 'a) '(6 11)))
+    (should (equal (vice-test--object-bounds s 8 ?\[ 'i) '(7 10)))))
+
+(ert-deftest vice--object-bounds-string-test ()
+  ;; "(f \"foo bar\")": string spans 4..12, contents 5..11
+  (let ((s "(f \"foo bar\")"))
+    (should (equal (vice-test--object-bounds s 6 ?\" 'a) '(4 13)))
+    (should (equal (vice-test--object-bounds s 6 ?\" 'i) '(5 12)))
+    ;; on the opening quote resolves the same string
+    (should (equal (vice-test--object-bounds s 4 ?\" 'a) '(4 13)))))
+
+(ert-deftest vice--object-bounds-thing-test ()
+  ;; word: i is the word, a extends over trailing whitespace
+  (let ((s "foo   bar"))
+    (should (equal (vice-test--object-bounds s 2 ?w 'i) '(1 4)))
+    (should (equal (vice-test--object-bounds s 2 ?w 'a) '(1 7))))
+  ;; symbol spans the hyphenated name in emacs-lisp-mode
+  (should (equal (vice-test--object-bounds "foo-bar baz" 3 ?s 'i) '(1 8))))
+
+(ert-deftest vice--object-bounds-unknown-test ()
+  ;; An unregistered object character yields nil, not an error.
+  (should (null (vice-test--object-bounds "(foo)" 3 ?z 'a))))
+
 (ert-deftest vice-kill-surrounding-sexp-test ()
   (multiple-tests-with #'vice-kill-surrounding-sexp
     (at 8 "(foo (bar a b c))" -> "(foo )")  ; inside sexp
