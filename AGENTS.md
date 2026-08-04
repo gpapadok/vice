@@ -5,9 +5,14 @@ This file provides guidance to coding agents when working with code in this repo
 ## Project overview
 
 `vice` (VIm-like Commands Extension for Emacs) is a small single-file Emacs
-Lisp package that adds Vim-style text-editing commands (e.g. `da(`, `di(`,
-`dd`, `yy`, `p`, `J`) to Emacs without replacing Emacs's native keybindings.
-It's distributed as a minor mode, `vice-mode`.
+Lisp package that brings Vim's composable `operator + text object` editing
+(e.g. `da(`, `di(`, `ci"`) to Emacs without modal state and without replacing
+Emacs's native keybindings. It's distributed as a minor mode, `vice-mode`.
+
+A single prefix key (`vice-key-prefix`, default `C-c v`) runs `vice-dispatch`,
+which reads a whole operation of the form `[count] operator [a|i] object`.
+The classic one-command-per-key bindings from earlier versions are still
+provided, opt-in via `vice-install-legacy-bindings`.
 
 ## Commands
 
@@ -35,32 +40,38 @@ There is no separate lint/build step; `Makefile` only defines `test`.
 
 ## Architecture
 
-- `vice-mode.el` — the entire package. All commands operate on the sexp
-  (balanced expression) surrounding point, or on the current line, using
-  Emacs's built-in `forward-sexp`/`backward-up-list`/kill-ring primitives.
-  Structure within the file:
-  - **Helpers**: `vice--key` (builds a keybinding under the configurable
-    `vice-key-prefix`, default `"C-c v"`), `vice--defvar-keymap` (macro that
-    builds a keymap from an alist of key-suffix/command pairs),
-    `vice--save-point` (macro to run a body and restore point afterward),
-    `vice--backward-up-list` (safe wrapper that won't error at top level or
-    when point sits on a leading paren), and `vice--surrounding-sexp-bounds`
-    (the core primitive — returns `(start end)` of the sexp enclosing point;
-    nearly every interactive command is built on top of this).
-  - **Commands**: interactive `vice-*` functions (kill/yank/comment
-    surrounding or inside sexp, insert line above/below, join lines,
-    replace sexp from kill-ring, line-level kill/yank), each marked
-    `;;;###autoload`.
-  - **Minor mode**: `vice-map` is built via `vice--defvar-keymap` from an
-    alist mapping key suffixes (e.g. `"w"`, `"C-w"`, `"M-w"`) to the
-    commands above; `vice-mode` is a global minor mode defined with
-    `define-minor-mode` using that keymap.
+- `vice-mode.el` — the entire package, organized as layered data plus the
+  dispatch that reads them. From the bottom up:
+  - **Text objects**: `vice--pair-bounds` (bracket pair enclosing point, via
+    `syntax-ppss` and the syntax table, any bracket type, `a`/`i`, count),
+    `vice--string-bounds` (string via `syntax-ppss`), `vice--thing-bounds`
+    (wraps `bounds-of-thing-at-point`), and `vice--treesit-bounds`
+    (tree-sitter node, `fboundp`-guarded so it is a no-op without a parser).
+    `vice-object-alist` maps an object character to an ordered list of
+    provider specs — `(:pair OPEN)`, `(:string QUOTE)`, `(:thing THING)`,
+    `(:treesit THING)` — and `vice--object-bounds` tries them in order,
+    returning the first `(start end)` found.
+  - **Operators**: `vice--op-*` functions of `(start end)`, collected in
+    `vice-operator-alist` (keys `d y c ; v r =`), applied by `vice--apply`
+    inside an `atomic-change-group` (one undo step per operation).
+  - **Dispatch**: `vice-dispatch` reads `[count] operator [a|i] object` with
+    `read-char-exclusive`, resolves bounds, and applies the operator.
+  - **Commands**: `;;;###autoload` `vice-*` functions. The sexp commands are
+    thin wrappers over `vice--object-bounds`/`vice--apply` (via
+    `vice--operate-on-object`); the line/join/insert commands use
+    `vice--save-point` (a macro that restores point through a marker).
+  - **Minor mode**: `vice-map` binds `vice-key-prefix` to `vice-dispatch`;
+    `vice-install-legacy-bindings` binds `vice--legacy-bindings` under
+    `vice-legacy-key-prefix` (default `C-c V`, a sibling prefix, since the
+    dispatch prefix is now a command and cannot also be a prefix). `vice-mode`
+    is a global minor mode using `vice-map`.
 - `vice-mode-test.el` — ERT tests. Defines two macros to keep tests terse:
   `test-with` (apply a function at a buffer position on a "before" string,
   assert the buffer matches an "after" string) and `multiple-tests-with`
-  (run several `test-with` cases against the same function). Indentation
-  rules for these macros (and `vice--defvar-keymap`) are declared in
-  `.dir-locals.el` for correct `indent-for-tab-command` behavior in Emacs.
-- `README.org` documents every public command and its default keybinding
-  (all under the `C-c v` prefix) — update it when adding or rebinding a
-  command.
+  (run several `test-with` cases against the same function); their
+  indentation rules are declared in `.dir-locals.el`. Tests also call the
+  internal bounds/dispatch functions directly and feed key sequences to
+  `vice-dispatch` via `unread-command-events`. The tree-sitter test is
+  guarded with `skip-unless` so the suite passes without a grammar installed.
+- `README.org` documents the grammar (operators, objects, examples) and the
+  legacy commands — update it when adding or rebinding an operator or object.

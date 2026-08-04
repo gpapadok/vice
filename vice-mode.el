@@ -5,8 +5,10 @@
 ;; Author: Giorgos Papadokostakis <giorgos.papadokostakis@proton.me>
 ;; Created: 13 December 2023
 ;; Name: Vice
-;; Version: 0.1.0
+;; Version: 0.2.0
 ;; Keywords: vi, commands
+;; URL: https://github.com/gpapadok/vice
+;; Package-Requires: ((emacs "29.1"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -14,13 +16,26 @@
 
 ;;; Commentary:
 
-;; Vice is an attempt to close the gap between Emacs vanilla keybinds
-;; and the fluidity some of Vi commands give.  Primarily, it is
-;; supposed to make it easier to manipulate structured expressions.
-;; All operations that vice provides are possible with Emacs vanilla
-;; commands but may require multiple operations and can often feel
-;; clunky.  Vice is meant to make a lot of common text editing
-;; operations feel streamlined and smooth.
+;; Vice brings Vim's composable "operator + text object" editing to
+;; Emacs without modal state.  The `vice-key-prefix' key (default
+;; "C-c v") runs `vice-dispatch', which reads a whole operation of the
+;; form
+;;
+;;     [count] operator [a|i] object
+;;
+;; For example "C-c v d a (" deletes the surrounding parentheses,
+;; "C-c v c i \"" changes the contents of a string, and
+;; "C-c v 2 d a (" deletes two levels of enclosing parentheses.
+;;
+;; Operators come from `vice-operator-alist' (d y c ; v r =) and
+;; objects from `vice-object-alist' (brackets, strings, word, symbol,
+;; paragraph, function, ...).  Objects resolve through syntax-table,
+;; thing-at-point, and tree-sitter providers, so the grammar works
+;; beyond Lisp.
+;;
+;; The classic single-key commands from earlier versions remain
+;; available; call `vice-install-legacy-bindings' to bind them under
+;; `vice-legacy-key-prefix'.
 
 ;;; Code:
 
@@ -35,7 +50,9 @@
   :prefix "vice-")
 
 (defcustom vice-key-prefix "C-c v"
-  "Key prefix for vice commands.")
+  "Key prefix bound to `vice-dispatch' in `vice-map'."
+  :type 'string
+  :group 'vice)
 
 ;; Helpers
 
