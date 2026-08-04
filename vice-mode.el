@@ -234,6 +234,47 @@ OPERATOR is a function of two arguments as stored in
   (atomic-change-group
     (funcall operator start end)))
 
+;; Dispatch
+
+(defun vice--operator-keys ()
+  "Return the operator characters as a display string."
+  (mapconcat (lambda (e) (char-to-string (car e))) vice-operator-alist ""))
+
+;;;###autoload
+(defun vice-dispatch (&optional arg)
+  "Read and run a vice operation: [count] operator [a|i] object.
+The operator is one of `vice-operator-alist' (d y c ; v r =), the
+modifier is `a' (around) or `i' (inside), and the object is a key in
+`vice-object-alist'.  A numeric prefix ARG, or leading digits, sets the
+count where the object supports it.  \\[keyboard-quit] aborts at any
+point."
+  (interactive "P")
+  (let ((count (and arg (prefix-numeric-value arg)))
+        (char (read-char-exclusive (format "vice [%s]:" (vice--operator-keys)))))
+    (unless count
+      (let ((n 0) (seen nil))
+        (while (<= ?0 char ?9)
+          (setq n (+ (* n 10) (- char ?0))
+                seen t
+                char (read-char-exclusive (format "vice %d:" n))))
+        (when seen (setq count n))))
+    (let ((operator (assq char vice-operator-alist)))
+      (cond
+       ((null operator)
+        (message "vice: %s is not an operator" (single-key-description char)))
+       (t
+        (let* ((op-str (char-to-string char))
+               (mchar (read-char-exclusive (format "vice %s [a/i]:" op-str)))
+               (modifier (pcase mchar (?a 'a) (?i 'i))))
+          (if (null modifier)
+              (message "vice: expected `a' or `i'")
+            (let ((object (read-char-exclusive (format "vice %s%c:" op-str mchar))))
+              (pcase (vice--object-bounds object modifier count)
+                (`(,start ,end)
+                 (vice--apply (cdr operator) start end))
+                (_ (message "vice: no %s object at point"
+                            (single-key-description object))))))))))))
+
 ;; Commands
 
 ;;;###autoload

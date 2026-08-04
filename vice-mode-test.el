@@ -175,6 +175,43 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
     (should (= (point) 6))
     (should (= (mark t) 11))))
 
+(defun vice-test--dispatch (before position keys)
+  "Run `vice-dispatch' reading KEYS at POSITION in BEFORE.
+KEYS is a key-sequence string fed through `unread-command-events'.
+Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert before)
+    (goto-char position)
+    (let ((unread-command-events (listify-key-sequence keys)))
+      (vice-dispatch))
+    (list (buffer-string) (point))))
+
+(ert-deftest vice-dispatch-test ()
+  ;; operator + a/i + object, end to end through the reader
+  (should (equal (car (vice-test--dispatch "(foo (bar))" 8 "da(")) "(foo )"))
+  (should (equal (car (vice-test--dispatch "(foo (bar))" 8 "di(")) "(foo ())"))
+  ;; a leading digit sets the count and reaches the outer pair
+  (should (equal (car (vice-test--dispatch "(foo (bar))" 8 "2da(")) ""))
+  ;; a word object
+  (should (equal (car (vice-test--dispatch "foo bar" 2 "diw")) " bar")))
+
+(ert-deftest vice-dispatch-save-test ()
+  ;; y copies without modifying the buffer
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "(foo (bar))")
+    (goto-char 8)
+    (let (kill-ring kill-ring-yank-pointer
+          (unread-command-events (listify-key-sequence "ya(")))
+      (vice-dispatch)
+      (should (equal (buffer-string) "(foo (bar))"))
+      (should (equal (current-kill 0) "(bar)")))))
+
+(ert-deftest vice-dispatch-no-object-test ()
+  ;; No object at point: buffer unchanged, no error.
+  (should (equal (car (vice-test--dispatch "  foo" 4 "da(")) "  foo")))
+
 (ert-deftest vice-kill-surrounding-sexp-test ()
   (multiple-tests-with #'vice-kill-surrounding-sexp
     (at 8 "(foo (bar a b c))" -> "(foo )")  ; inside sexp
