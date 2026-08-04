@@ -182,6 +182,58 @@ OBJECT is a character key in `vice-object-alist'.  MODIFIER is `a' or
                 (`(:thing ,thing) (vice--thing-bounds modifier thing))))
             (cdr (assq object vice-object-alist))))
 
+;; Operators
+
+(defun vice--op-kill (start end)
+  "Kill the region START..END."
+  (kill-region start end))
+
+(defun vice--op-save (start end)
+  "Copy the region START..END to the kill ring."
+  (kill-ring-save start end))
+
+(defun vice--op-change (start end)
+  "Kill the region START..END and leave point in the resulting hole."
+  (kill-region start end)
+  (goto-char start))
+
+(defun vice--op-comment (start end)
+  "Comment or uncomment the region START..END."
+  (comment-or-uncomment-region start end))
+
+(defun vice--op-select (start end)
+  "Activate the region START..END."
+  (goto-char start)
+  (push-mark end nil t))
+
+(defun vice--op-replace (start end)
+  "Replace the region START..END with the head of the kill ring."
+  (goto-char start)
+  (delete-region start end)
+  (yank))
+
+(defun vice--op-indent (start end)
+  "Indent the region START..END."
+  (indent-region start end))
+
+(defvar vice-operator-alist
+  '((?d . vice--op-kill)
+    (?y . vice--op-save)
+    (?c . vice--op-change)
+    (?\; . vice--op-comment)
+    (?v . vice--op-select)
+    (?r . vice--op-replace)
+    (?= . vice--op-indent))
+  "Alist mapping an operator character to a function of two arguments.
+The function receives the START and END of the region to act on.")
+
+(defun vice--apply (operator start end)
+  "Run OPERATOR on the region START..END as a single undo step.
+OPERATOR is a function of two arguments as stored in
+`vice-operator-alist'."
+  (atomic-change-group
+    (funcall operator start end)))
+
 ;; Commands
 
 ;;;###autoload

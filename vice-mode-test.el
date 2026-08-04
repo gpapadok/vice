@@ -112,6 +112,69 @@ syntax."
   ;; An unregistered object character yields nil, not an error.
   (should (null (vice-test--object-bounds "(foo)" 3 ?z 'a))))
 
+(defun vice-test--run (before position operator object modifier)
+  "Apply OPERATOR to OBJECT/MODIFIER at POSITION in BEFORE.
+Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert before)
+    (goto-char position)
+    (pcase (vice--object-bounds object modifier nil)
+      (`(,start ,end)
+       (vice--apply (cdr (assq operator vice-operator-alist)) start end)))
+    (list (buffer-string) (point))))
+
+(ert-deftest vice--apply-kill-test ()
+  ;; d a ( deletes the pair; d i ( deletes its contents
+  (should (equal (car (vice-test--run "(foo (bar))" 8 ?d ?\( 'a)) "(foo )"))
+  (should (equal (car (vice-test--run "(foo (bar))" 8 ?d ?\( 'i)) "(foo ())")))
+
+(ert-deftest vice--apply-change-test ()
+  ;; c i ( empties the pair and leaves point inside it
+  (pcase-let ((`(,text ,pt) (vice-test--run "(foo (bar))" 8 ?c ?\( 'i)))
+    (should (equal text "(foo ())"))
+    (should (= pt 7))))
+
+(ert-deftest vice--apply-save-test ()
+  ;; y copies without modifying the buffer
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "(foo (bar))")
+    (goto-char 8)
+    (let (kill-ring kill-ring-yank-pointer)
+      (pcase (vice--object-bounds ?\( 'a nil)
+        (`(,start ,end)
+         (vice--apply #'vice--op-save start end)))
+      (should (equal (buffer-string) "(foo (bar))"))
+      (should (equal (current-kill 0) "(bar)")))))
+
+(ert-deftest vice--apply-replace-test ()
+  ;; r swaps the object for the kill-ring head
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "(foo (bar))")
+    (goto-char 8)
+    (let ((kill-ring '("BAZ")) kill-ring-yank-pointer)
+      (pcase (vice--object-bounds ?\( 'a nil)
+        (`(,start ,end)
+         (vice--apply #'vice--op-replace start end)))
+      (should (equal (buffer-string) "(foo BAZ)")))))
+
+(ert-deftest vice--apply-select-test ()
+  ;; v activates the region spanning the object
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "(foo (bar))")
+    (goto-char 8)
+    (pcase (vice--object-bounds ?\( 'a nil)
+      (`(,start ,end)
+       (vice--apply #'vice--op-select start end)))
+    ;; region-active-p depends on transient-mark-mode (off in batch),
+    ;; so assert on the underlying point and mark directly.
+    (should mark-active)
+    (should (= (point) 6))
+    (should (= (mark t) 11))))
+
 (ert-deftest vice-kill-surrounding-sexp-test ()
   (multiple-tests-with #'vice-kill-surrounding-sexp
     (at 8 "(foo (bar a b c))" -> "(foo )")  ; inside sexp
