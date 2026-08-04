@@ -24,6 +24,8 @@
 
 ;;; Code:
 
+(require 'thingatpt)
+
 ;; Custom
 
 (defgroup vice nil
@@ -116,6 +118,69 @@ levels (default 1)."
             ('i (if (< (1+ start) (1- end))
                     (list (1+ start) (1- end))
                   (list (1+ start) (1+ start))))))))))
+
+(defun vice--string-bounds (modifier &optional quote)
+  "Return (START END) of the string enclosing point, or nil.
+MODIFIER is `a' to include the quote characters or `i' for the
+contents.  QUOTE, when non-nil, requires that opening quote character."
+  (let* ((ppss (syntax-ppss))
+         (start (cond
+                 ((nth 3 ppss) (nth 8 ppss))              ; inside a string
+                 ((eq (char-syntax (or (char-after) ?\s)) ?\")
+                  (point)))))                             ; on an opening quote
+    (when (and start (or (null quote) (eq (char-after start) quote)))
+      (save-excursion
+        (goto-char start)
+        (let ((end (progn (forward-sexp 1) (point))))
+          (pcase modifier
+            ('a (list start end))
+            ('i (list (1+ start) (1- end)))))))))
+
+(defun vice--thing-bounds (modifier thing)
+  "Return (START END) for THING at point, or nil.
+THING is a symbol understood by `bounds-of-thing-at-point'.  For
+MODIFIER `a', a word or symbol extends over trailing whitespace, as
+in Vim's `aw'."
+  (let ((bounds (bounds-of-thing-at-point thing)))
+    (when bounds
+      (let ((start (car bounds))
+            (end (cdr bounds)))
+        (when (and (eq modifier 'a) (memq thing '(word symbol)))
+          (save-excursion
+            (goto-char end)
+            (skip-chars-forward " \t")
+            (setq end (point))))
+        (list start end)))))
+
+(defvar vice-object-alist
+  '((?\( (:pair ?\())
+    (?\) (:pair ?\())
+    (?\[ (:pair ?\[))
+    (?\] (:pair ?\[))
+    (?\{ (:pair ?\{))
+    (?\} (:pair ?\{))
+    (?m  (:pair nil))
+    (?\" (:string ?\"))
+    (?'  (:string ?'))
+    (?w  (:thing word))
+    (?s  (:thing symbol))
+    (?p  (:thing paragraph))
+    (?f  (:thing defun)))
+  "Alist mapping an object character to a list of provider specs.
+Each spec is one of (:pair OPEN), (:string QUOTE), or (:thing THING);
+`vice--object-bounds' tries them in order and returns the first bounds
+found.  Both members of a delimiter pair map to the same object.")
+
+(defun vice--object-bounds (object modifier &optional count)
+  "Return (START END) for OBJECT relative to point, or nil.
+OBJECT is a character key in `vice-object-alist'.  MODIFIER is `a' or
+`i'.  COUNT applies to providers that support it."
+  (seq-some (lambda (spec)
+              (pcase spec
+                (`(:pair ,open) (vice--pair-bounds modifier open count))
+                (`(:string ,quote) (vice--string-bounds modifier quote))
+                (`(:thing ,thing) (vice--thing-bounds modifier thing))))
+            (cdr (assq object vice-object-alist))))
 
 ;; Commands
 
