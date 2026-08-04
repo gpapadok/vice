@@ -212,6 +212,32 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
   ;; No object at point: buffer unchanged, no error.
   (should (equal (car (vice-test--dispatch "  foo" 4 "da(")) "  foo")))
 
+(ert-deftest vice-map-binds-dispatch-test ()
+  ;; The prefix key runs the grammar reader.
+  (should (eq (lookup-key vice-map (kbd vice-key-prefix)) #'vice-dispatch)))
+
+(ert-deftest vice-install-legacy-bindings-test ()
+  ;; Installing the legacy set adds the classic commands under a sibling
+  ;; prefix without disturbing the dispatch binding.
+  (let ((vice-map (copy-keymap vice-map)))
+    (vice-install-legacy-bindings "C-c V")
+    (should (eq (lookup-key vice-map (kbd "C-c V w"))
+                #'vice-kill-surrounding-sexp))
+    (should (eq (lookup-key vice-map (kbd "C-c V M-e"))
+                #'vice-save-end-of-line))
+    (should (eq (lookup-key vice-map (kbd vice-key-prefix)) #'vice-dispatch))))
+
+(ert-deftest vice--save-point-marker-test ()
+  ;; The saved position tracks deletions before point (marker, not int).
+  (with-temp-buffer
+    (insert "abcXdef")
+    (goto-char 5)                        ; on the 'd'
+    (vice--save-point
+     (goto-char 1)
+     (delete-char 2))                    ; remove "ab"
+    (should (= (point) 3))               ; still on the 'd', now at 3
+    (should (= (char-after) ?d))))
+
 (ert-deftest vice-kill-surrounding-sexp-test ()
   (multiple-tests-with #'vice-kill-surrounding-sexp
     (at 8 "(foo (bar a b c))" -> "(foo )")  ; inside sexp
