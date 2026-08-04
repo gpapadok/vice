@@ -227,6 +227,27 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
                 #'vice-save-end-of-line))
     (should (eq (lookup-key vice-map (kbd vice-key-prefix)) #'vice-dispatch))))
 
+(ert-deftest vice--object-bounds-treesit-function-test ()
+  ;; The f object resolves a whole function (a) or its body (i) via
+  ;; tree-sitter.  Skipped when the python grammar is not installed.
+  (skip-unless (and (fboundp 'treesit-language-available-p)
+                    (treesit-language-available-p 'python)
+                    (fboundp 'python-ts-mode)))
+  (with-temp-buffer
+    (python-ts-mode)
+    (insert "def foo(a, b):\n    return a + b\n")
+    (goto-char 20)                       ; inside the body
+    (should (equal (vice--object-bounds ?f 'a) '(1 32)))
+    (should (equal (vice--object-bounds ?f 'i) '(20 32)))))
+
+(ert-deftest vice--object-bounds-treesit-fallback-test ()
+  ;; With no tree-sitter parser, f falls back to the defun thing.
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "(defun foo () 1)")
+    (goto-char 8)
+    (should (equal (vice--object-bounds ?f 'a) '(1 17)))))
+
 (ert-deftest vice--save-point-marker-test ()
   ;; The saved position tracks deletions before point (marker, not int).
   (with-temp-buffer
