@@ -77,6 +77,46 @@ Doesn't work on top of a leading paren and doesn't error on top level form."
          (forward-sexp 1))
        (list start (point))))))
 
+;; Text objects
+
+(defun vice--open-delimiter-p (pos)
+  "Return non-nil when the character at POS opens a balanced expression.
+Recognizes any open-paren-class delimiter (\"(\", \"[\", \"{\") per the
+current syntax table, and is nil at the end of the buffer."
+  (let ((c (char-after pos)))
+    (and c (eq (char-syntax c) ?\())))
+
+(defun vice--pair-open-positions ()
+  "Return positions of enclosing opening delimiters, innermost first.
+When point sits on an opening delimiter it is treated as the innermost
+enclosing pair."
+  (let ((opens (reverse (nth 9 (syntax-ppss)))))
+    (if (vice--open-delimiter-p (point))
+        (cons (point) opens)
+      opens)))
+
+(defun vice--pair-bounds (modifier &optional open count)
+  "Return (START END) of the bracket pair enclosing point, or nil.
+MODIFIER is `a' to include the delimiters or `i' for their contents.
+OPEN, when non-nil, is the opening-delimiter character to seek; otherwise
+the nearest enclosing pair of any type is used.  COUNT ascends COUNT
+levels (default 1)."
+  (let* ((positions (vice--pair-open-positions))
+         (positions (if open
+                        (seq-filter (lambda (p) (eq (char-after p) open))
+                                    positions)
+                      positions))
+         (start (nth (1- (or count 1)) positions)))
+    (when start
+      (save-excursion
+        (goto-char start)
+        (let ((end (progn (forward-sexp 1) (point))))
+          (pcase modifier
+            ('a (list start end))
+            ('i (if (< (1+ start) (1- end))
+                    (list (1+ start) (1- end))
+                  (list (1+ start) (1+ start))))))))))
+
 ;; Commands
 
 ;;;###autoload

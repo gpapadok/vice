@@ -36,6 +36,42 @@ before after pairs \(TESTS\)"
                     ,@test))
                tests)))
 
+(defun vice-test--pair-bounds (before position &rest args)
+  "Return the result of `vice--pair-bounds' called with ARGS.
+Run in a temp buffer holding BEFORE with point at POSITION, in
+`emacs-lisp-mode' so that all bracket types carry paren syntax."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert before)
+    (goto-char position)
+    (apply #'vice--pair-bounds args)))
+
+(ert-deftest vice--pair-bounds-test ()
+  ;; "(foo (bar a b c))"  inner pair spans 6..16, outer 1..17
+  (let ((s "(foo (bar a b c))"))
+    ;; nearest enclosing pair, around vs inside
+    (should (equal (vice-test--pair-bounds s 8 'a) '(6 17)))
+    (should (equal (vice-test--pair-bounds s 8 'i) '(7 16)))
+    ;; on the opening and closing parens resolve to the same pair
+    (should (equal (vice-test--pair-bounds s 6 'a) '(6 17)))
+    (should (equal (vice-test--pair-bounds s 16 'a) '(6 17)))
+    ;; count ascends to the outer pair
+    (should (equal (vice-test--pair-bounds s 8 'a nil 2) '(1 18)))))
+
+(ert-deftest vice--pair-bounds-type-test ()
+  ;; "(foo [bar] baz)"  bracket pair 6..10, paren pair 1..15
+  (let ((s "(foo [bar] baz)"))
+    ;; nearest pair from inside the brackets is the brackets
+    (should (equal (vice-test--pair-bounds s 8 'a) '(6 11)))
+    ;; asking for a paren specifically skips the brackets (Vim da( )
+    (should (equal (vice-test--pair-bounds s 8 'a ?\() '(1 16)))
+    (should (equal (vice-test--pair-bounds s 8 'a ?\[) '(6 11)))))
+
+(ert-deftest vice--pair-bounds-outside-test ()
+  ;; No enclosing pair, and end of buffer: nil, never an error.
+  (should (null (vice-test--pair-bounds "  foo bar" 4 'a)))
+  (should (null (vice-test--pair-bounds "(foo bar)" 10 'a))))
+
 (ert-deftest vice-kill-surrounding-sexp-test ()
   (multiple-tests-with #'vice-kill-surrounding-sexp
     (at 8 "(foo (bar a b c))" -> "(foo )")  ; inside sexp
