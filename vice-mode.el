@@ -25,6 +25,7 @@
 ;;; Code:
 
 (require 'thingatpt)
+(require 'treesit nil t)
 
 ;; Custom
 
@@ -123,6 +124,38 @@ in Vim's `aw'."
             (setq end (point))))
         (list start end)))))
 
+(defun vice--treesit-thing-spec (thing)
+  "Return a spec `treesit-thing-at-point' accepts for THING, or nil.
+For `defun', fall back to the major mode's `treesit-defun-type-regexp'
+when tree-sitter thing settings do not define it."
+  (pcase thing
+    ('defun (cond
+             ((and (fboundp 'treesit-thing-defined-p)
+                   (treesit-thing-defined-p 'defun (treesit-language-at (point))))
+              'defun)
+             ((bound-and-true-p treesit-defun-type-regexp))))
+    (_ (and (fboundp 'treesit-thing-defined-p)
+            (treesit-thing-defined-p thing (treesit-language-at (point)))
+            thing))))
+
+(defun vice--treesit-bounds (modifier thing)
+  "Return (START END) for the tree-sitter THING enclosing point, or nil.
+Returns nil (so callers fall back to another provider) when tree-sitter
+is unavailable, the buffer has no parser, or THING is not resolvable.
+For MODIFIER `i' the bounds shrink to the node's \"body\" field when it
+has one."
+  (when (and (fboundp 'treesit-parser-list)
+             (fboundp 'treesit-thing-at-point)
+             (treesit-parser-list))
+    (let* ((spec (vice--treesit-thing-spec thing))
+           (node (and spec (ignore-errors (treesit-thing-at-point spec 'nested)))))
+      (when node
+        (pcase modifier
+          ('a (list (treesit-node-start node) (treesit-node-end node)))
+          ('i (let ((inner (or (treesit-node-child-by-field-name node "body")
+                               node)))
+                (list (treesit-node-start inner) (treesit-node-end inner)))))))))
+
 (defvar vice-object-alist
   '((?\( (:pair ?\())
     (?\) (:pair ?\())
@@ -136,11 +169,12 @@ in Vim's `aw'."
     (?w  (:thing word))
     (?s  (:thing symbol))
     (?p  (:thing paragraph))
-    (?f  (:thing defun)))
+    (?f  (:treesit defun) (:thing defun)))
   "Alist mapping an object character to a list of provider specs.
-Each spec is one of (:pair OPEN), (:string QUOTE), or (:thing THING);
-`vice--object-bounds' tries them in order and returns the first bounds
-found.  Both members of a delimiter pair map to the same object.")
+Each spec is one of (:pair OPEN), (:string QUOTE), (:thing THING), or
+(:treesit THING); `vice--object-bounds' tries them in order and returns
+the first bounds found.  Both members of a delimiter pair map to the
+same object.")
 
 (defun vice--object-bounds (object modifier &optional count)
   "Return (START END) for OBJECT relative to point, or nil.
@@ -150,7 +184,8 @@ OBJECT is a character key in `vice-object-alist'.  MODIFIER is `a' or
               (pcase spec
                 (`(:pair ,open) (vice--pair-bounds modifier open count))
                 (`(:string ,quote) (vice--string-bounds modifier quote))
-                (`(:thing ,thing) (vice--thing-bounds modifier thing))))
+                (`(:thing ,thing) (vice--thing-bounds modifier thing))
+                (`(:treesit ,thing) (vice--treesit-bounds modifier thing))))
             (cdr (assq object vice-object-alist))))
 
 ;; Operators
