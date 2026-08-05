@@ -11,8 +11,6 @@ Emacs's native keybindings. It's distributed as a minor mode, `vice-mode`.
 
 A single prefix key (`vice-key-prefix`, default `C-c v`) runs `vice-dispatch`,
 which reads a whole operation of the form `[count] operator [a|i] object`.
-The classic one-command-per-key bindings from earlier versions are still
-provided, opt-in via `vice-install-legacy-bindings`.
 
 ## Commands
 
@@ -30,7 +28,7 @@ To run a single test, invoke Emacs batch mode directly with `-f`:
 
 ```sh
 emacs -Q --batch -L . -l vice-mode-test.el -f ert-run-tests-batch-and-exit \
-  --eval "(ert-run-tests-batch-and-exit 'vice-kill-surrounding-sexp-test)"
+  --eval "(ert-run-tests-batch-and-exit 'vice-dispatch-test)"
 ```
 
 or more simply, load `vice-mode-test.el` in an interactive Emacs session and
@@ -54,24 +52,14 @@ There is no separate lint/build step; `Makefile` only defines `test`.
   - **Operators**: `vice--op-*` functions of `(start end)`, collected in
     `vice-operator-alist` (keys `d y c ; v r =`), applied by `vice--apply`
     inside an `atomic-change-group` (one undo step per operation).
-  - **Dispatch**: `vice-dispatch` reads `[count] operator [a|i] object` with
-    `read-char-exclusive`, resolves bounds, and applies the operator.
-  - **Commands**: `;;;###autoload` `vice-*` functions. The sexp commands are
-    thin wrappers over `vice--object-bounds`/`vice--apply` (via
-    `vice--operate-on-object`); the line/join/insert commands use
-    `vice--save-point` (a macro that restores point through a marker).
+  - **Dispatch**: `vice-dispatch` (the sole `;;;###autoload` command) reads
+    `[count] operator [a|i] object` with `read-char-exclusive`, resolves
+    bounds, and applies the operator.
   - **Minor mode**: `vice-map` binds `vice-key-prefix` to `vice-dispatch`;
-    `vice-install-legacy-bindings` binds `vice--legacy-bindings` under
-    `vice-legacy-key-prefix` (default `C-c V`, a sibling prefix, since the
-    dispatch prefix is now a command and cannot also be a prefix). `vice-mode`
-    is a global minor mode using `vice-map`.
-- `vice-mode-test.el` — ERT tests. Defines two macros to keep tests terse:
-  `test-with` (apply a function at a buffer position on a "before" string,
-  assert the buffer matches an "after" string) and `multiple-tests-with`
-  (run several `test-with` cases against the same function); their
-  indentation rules are declared in `.dir-locals.el`. Tests also call the
-  internal bounds/dispatch functions directly and feed key sequences to
-  `vice-dispatch` via `unread-command-events`. The tree-sitter test is
-  guarded with `skip-unless` so the suite passes without a grammar installed.
-- `README.org` documents the grammar (operators, objects, examples) and the
-  legacy commands — update it when adding or rebinding an operator or object.
+    `vice-mode` is a global minor mode using `vice-map`.
+- `vice-mode-test.el` — ERT tests that call the internal bounds/dispatch
+  functions directly and feed key sequences to `vice-dispatch` via
+  `unread-command-events`. The tree-sitter test is guarded with `skip-unless`
+  so the suite passes without a grammar installed.
+- `README.org` documents the grammar (operators, objects, examples) — update
+  it when adding or rebinding an operator or object.

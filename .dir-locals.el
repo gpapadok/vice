@@ -1,2 +1,2 @@
-((emacs-lisp-mode . ((eval . (put 'test-with 'lisp-indent-function 1))
-                     (eval . (put 'multiple-tests-with 'lisp-indent-function 1)))))
+;;; Directory Local Variables         -*- no-byte-compile: t -*-
+;;; For more information see (info "(emacs) Directory Variables")

@@ -12,30 +12,6 @@
 
 (require 'vice-mode)
 
-(defmacro test-with (fn at position before -> after)
-  "Helper macro to easily test functions that operate on text.
-Simple syntax to apply operation FN AT POSITION on BEFORE
-text and test equality of result with AFTER.
-Example use:
-\(test-with #'upcase-word at 0 \"hello\" -> \"HELLO\"\)"
-  (if (or (not (eql at 'at)) (not (eql -> '->)))
-      (error "Malformed test-with form")
-    `(with-temp-buffer
-       (insert ,before)
-       (goto-char ,position)
-       (funcall ,fn)
-       (should (string= (buffer-string) ,after)))))
-
-(defmacro multiple-tests-with (fn &rest tests)
-  "Helper macro to test a function on multiple before after text pairs.
-Basically extends `test-with` to test an operator FN on multiple
-before after pairs \(TESTS\)"
-  `(progn
-     ,@(mapcar (lambda (test)
-                 `(test-with ,fn
-                    ,@test))
-               tests)))
-
 (defun vice-test--pair-bounds (before position &rest args)
   "Return the result of `vice--pair-bounds' called with ARGS.
 Run in a temp buffer holding BEFORE with point at POSITION, in
@@ -216,17 +192,6 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
   ;; The prefix key runs the grammar reader.
   (should (eq (lookup-key vice-map (kbd vice-key-prefix)) #'vice-dispatch)))
 
-(ert-deftest vice-install-legacy-bindings-test ()
-  ;; Installing the legacy set adds the classic commands under a sibling
-  ;; prefix without disturbing the dispatch binding.
-  (let ((vice-map (copy-keymap vice-map)))
-    (vice-install-legacy-bindings "C-c V")
-    (should (eq (lookup-key vice-map (kbd "C-c V w"))
-                #'vice-kill-surrounding-sexp))
-    (should (eq (lookup-key vice-map (kbd "C-c V M-e"))
-                #'vice-save-end-of-line))
-    (should (eq (lookup-key vice-map (kbd vice-key-prefix)) #'vice-dispatch))))
-
 (ert-deftest vice--object-bounds-treesit-function-test ()
   ;; The f object resolves a whole function (a) or its body (i) via
   ;; tree-sitter.  Skipped when the python grammar is not installed.
@@ -247,76 +212,5 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
     (insert "(defun foo () 1)")
     (goto-char 8)
     (should (equal (vice--object-bounds ?f 'a) '(1 17)))))
-
-(ert-deftest vice--save-point-marker-test ()
-  ;; The saved position tracks deletions before point (marker, not int).
-  (with-temp-buffer
-    (insert "abcXdef")
-    (goto-char 5)                        ; on the 'd'
-    (vice--save-point
-     (goto-char 1)
-     (delete-char 2))                    ; remove "ab"
-    (should (= (point) 3))               ; still on the 'd', now at 3
-    (should (= (char-after) ?d))))
-
-(ert-deftest vice-kill-surrounding-sexp-test ()
-  (multiple-tests-with #'vice-kill-surrounding-sexp
-    (at 8 "(foo (bar a b c))" -> "(foo )")  ; inside sexp
-    (at 6 "(foo (bar a b c))" -> "(foo )")  ; on opening paren
-    (at 16 "(foo (bar a b c))" -> "(foo )") ; on closing paren
-    (at 2 "(foo (bar a b c))" -> "")        ; inside higher level sexp
-    (at 2 "     (foo (bar a b c))"-> "     (foo (bar a b c))"))) ; outside sexp
-
-(ert-deftest vice-kill-inside-sexp-test ()
-  (multiple-tests-with #'vice-kill-inside-sexp
-    (at 8 "(foo (bar a b c))" -> "(foo ())")  ; inside inner sexp
-    (at 6 "(foo (bar a b c))" -> "(foo ())")  ; on opening paren
-    (at 16 "(foo (bar a b c))" -> "(foo ())") ; on closing paren
-    (at 2 "(foo (bar a b c))" -> "()")  ; inside higher level sexp
-    (at 2 "     (foo (bar a b c)))" -> "     (foo (bar a b c)))"))) ; outside sexp
-
-(ert-deftest vice-save-surrounding-sexp-test ()
-  (test-with (lambda ()
-               (vice-save-surrounding-sexp)
-               (end-of-buffer)
-               (yank))
-    at 8 "(foo (bar a b c))" -> "(foo (bar a b c))(bar a b c)"))
-
-(ert-deftest vice-save-inside-sexp-test ()
-  (test-with (lambda ()
-               (vice-save-inside-sexp)
-               (beginning-of-buffer)
-               (yank))
-    at 2 "(foo (bar a b c))" -> "foo (bar a b c)(foo (bar a b c))"))
-
-(ert-deftest vice-save-inside-sexp-outside-test ()
-  "Regression: saving inside a sexp outside any list must not error."
-  (with-temp-buffer
-    (insert "     (foo (bar a b c))")
-    (goto-char 2)
-    (let (kill-ring kill-ring-yank-pointer)
-      (vice-save-inside-sexp)
-      (should (null kill-ring))
-      (should (string= (buffer-string) "     (foo (bar a b c))")))))
-
-(ert-deftest vice-replace-sexp-outside-test ()
-  "Regression: replacing outside any list must not alter the buffer."
-  (with-temp-buffer
-    (insert "  (foo bar)")
-    (goto-char 1)
-    (let ((kill-ring '("XXX"))
-          kill-ring-yank-pointer)
-      (vice-replace-sexp)
-      (should (string= (buffer-string) "  (foo bar)")))))
-
-(ert-deftest vice-kill-line-at-point-test ()
-  (test-with #'vice-kill-line-at-point
-    at 17
-    "(defun inc (n)
-  \"A doc string\"
-  (+ n 1))"
-    ->
-    "(defun inc (n)
-  (+ n 1))"))
 
 ;;; vice-mode-test.el ends here

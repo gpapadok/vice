@@ -98,35 +98,3 @@ thing otherwise.
 
 Both members of a delimiter pair select the same object, so ~da)~ and
 ~da(~ are equivalent.
-
-** Classic single-key commands
-
-Earlier versions of vice bound one command per key under the prefix.
-Those commands are still provided. To bind them, call:
-
-#+begin_src elisp
-  (vice-install-legacy-bindings)
-#+end_src
-
-This binds them under ~vice-legacy-key-prefix~ (default ~C-c V~), a
-sibling of the dispatch prefix. The commands are:
-
-| Command                         | Suffix | Vim   |
-|---------------------------------+--------+-------|
-| ~vice-kill-surrounding-sexp~    | ~w~    | ~da(~ |
-| ~vice-kill-inside-sexp~         | ~C-w~  | ~di(~ |
-| ~vice-save-surrounding-sexp~    | ~M-w~  | ~ya(~ |
-| ~vice-save-inside-sexp~         | ~M-W~  | ~yi(~ |
-| ~vice-comment-surrounding-sexp~ | ~;~    |       |
-| ~vice-insert-line-below~        | ~j~    | ~o~   |
-| ~vice-insert-line~              | ~M-j~  | ~O~   |
-| ~vice-join-line-one-space~      | ~k~    | ~J~   |
-| ~vice-join-line-no-space~       | ~M-k~  | ~gJ~  |
-| ~vice-replace-sexp~             | ~y~    |       |
-| ~vice-kill-line-at-point~       | ~l~    | ~dd~  |
-| ~vice-save-line~                | ~M-l~  | ~yy~  |
-| ~vice-yank-line~                | ~C-l~  | ~p~   |
-| ~vice-kill-end-of-line~         | ~e~    | ~d$~  |
-| ~vice-save-end-of-line~         | ~M-e~  | ~y$~  |
-
-So, for example, ~C-c V w~ deletes the surrounding sexp.
