@@ -32,10 +32,6 @@
 ;; paragraph, function, ...).  Objects resolve through syntax-table,
 ;; thing-at-point, and tree-sitter providers, so the grammar works
 ;; beyond Lisp.
-;;
-;; The classic single-key commands from earlier versions remain
-;; available; call `vice-install-legacy-bindings' to bind them under
-;; `vice-legacy-key-prefix'.
 
 ;;; Code:
 
@@ -53,20 +49,6 @@
   "Key prefix bound to `vice-dispatch' in `vice-map'."
   :type 'string
   :group 'vice)
-
-;; Helpers
-
-(defmacro vice--save-point (&rest body)
-  "Evaluate BODY and return to the starting position afterward.
-The position is tracked with a marker, so it is restored correctly even
-when BODY inserts or deletes text before point."
-  (let ((marker (gensym "marker"))
-        (result (gensym "result")))
-    `(let ((,marker (point-marker))
-           (,result (progn ,@body)))
-       (goto-char ,marker)
-       (set-marker ,marker nil)
-       ,result)))
 
 ;; Text objects
 
@@ -298,134 +280,6 @@ point."
                 (_ (message "vice: no %s object at point"
                             (single-key-description object))))))))))))
 
-;; Commands
-
-(defun vice--operate-on-object (operator object modifier)
-  "Apply OPERATOR to OBJECT/MODIFIER at point when its bounds exist.
-OPERATOR is a function as stored in `vice-operator-alist'."
-  (pcase (vice--object-bounds object modifier)
-    (`(,start ,end)
-     (vice--apply operator start end))))
-
-;;;###autoload
-(defun vice-kill-surrounding-sexp () ; da(
-  "Delete the sexp surrounding point."
-  (interactive)
-  (vice--operate-on-object #'vice--op-kill ?m 'a))
-
-;;;###autoload
-(defun vice-kill-inside-sexp () ; di(
-  "Delete inside the sexp surrounding point."
-  (interactive)
-  (vice--operate-on-object #'vice--op-kill ?m 'i))
-
-;;;###autoload
-(defun vice-save-surrounding-sexp () ; ya(
-  "Saves the sexp surrounding point to the kill ring."
-  (interactive)
-  (vice--operate-on-object #'vice--op-save ?m 'a))
-
-;;;###autoload
-(defun vice-save-inside-sexp () ; yi(
-  "Saves the content of the sexp surrounding point to the kill ring."
-  (interactive)
-  (vice--operate-on-object #'vice--op-save ?m 'i))
-
-;;;###autoload
-(defun vice-comment-surrounding-sexp ()
-  "Comment the sexp surrounding point."
-  (interactive)
-  (vice--operate-on-object #'vice--op-comment ?m 'a))
-
-;;;###autoload
-(defun vice-insert-line-below () ; o
-  "Same as hitting enter at end of line."
-  (interactive)
-  (move-end-of-line nil)
-  (newline-and-indent))
-
-;;;###autoload
-(defun vice-insert-line () ; O
-  "Insert an indented line at the same line as point."
-  (interactive)
-  (back-to-indentation)
-  (newline-and-indent)
-  (forward-line -1)
-  (indent-for-tab-command))
-
-;;;###autoload
-(defun vice-join-line-one-space ()
-  "Joins current line with next leaving only one space between.
-Like vi J."
-  (interactive)
-  (move-end-of-line 1)
-  (kill-line)
-  (just-one-space))
-
-;;;###autoload
-(defun vice-join-line-no-space ()
-  "Joins current line with next leaving no whitespace.
-Like vi gJ."
-  (interactive)
-  (move-end-of-line 1)
-  (kill-line)
-  (delete-horizontal-space))
-
-;;;###autoload
-(defun vice-replace-sexp ()
-  "Replace surrounding sexp by yanking from the kill ring."
-  (interactive)
-  (vice--operate-on-object #'vice--op-replace ?m 'a))
-
-;;;###autoload
-(defun vice-save-line ()
-  "Saves the current line to the kill ring.
-Like vi yy."
-  (interactive)
-  (vice--save-point
-   (move-beginning-of-line 1)
-   (let ((region-start (point)))
-     (forward-line)
-     (kill-ring-save region-start (point)))))
-
-;;;###autoload
-(defun vice-yank-line ()
-  "Pastes a line.
-Like vi p."
-  (interactive)
-  (vice--save-point
-   (move-beginning-of-line 1)
-   (yank)))
-
-;;;###autoload
-(defun vice-kill-end-of-line ()
-  "Deletes from current point to the end of line."
-  (interactive)
-  (vice--save-point
-   (let ((opoint (point)))
-     (move-end-of-line 1)
-     (kill-region opoint (point)))))
-
-;;;###autoload
-(defun vice-save-end-of-line ()
-  "Saves from point to the end of line to the kill ring."
-  (interactive)
-  (vice--save-point
-   (let ((opoint (point)))
-     (move-end-of-line 1)
-     (kill-ring-save opoint (point)))))
-
-;;;###autoload
-(defun vice-kill-line-at-point ()
-  "Deletes line of current point.
-Like Vi dd."
-  (interactive)
-  (vice--save-point
-   (move-beginning-of-line 1)
-   (let ((opoint (point)))
-     (forward-line)
-     (kill-region opoint (point)))))
-
 ;; Minor mode
 
 (defvar vice-map
@@ -435,44 +289,6 @@ Like Vi dd."
   "Keymap for `vice-mode'.
 The `vice-key-prefix' key runs `vice-dispatch', which reads a full
 operation of the form [count] operator [a|i] object.")
-
-(defcustom vice-legacy-key-prefix "C-c V"
-  "Key prefix for the classic single-key vice commands.
-Used by `vice-install-legacy-bindings'.  It is a sibling of, not nested
-under, `vice-key-prefix', which is bound to `vice-dispatch'."
-  :type 'string
-  :group 'vice)
-
-(defconst vice--legacy-bindings
-  '(("w" . vice-kill-surrounding-sexp)
-    ("C-w" . vice-kill-inside-sexp)
-    ("M-w" . vice-save-surrounding-sexp)
-    ("M-W" . vice-save-inside-sexp)
-    (";" . vice-comment-surrounding-sexp)
-    ("j" . vice-insert-line-below)
-    ("M-j" . vice-insert-line)
-    ("k" . vice-join-line-one-space)
-    ("M-k" . vice-join-line-no-space)
-    ("y" . vice-replace-sexp)
-    ("l" . vice-kill-line-at-point)
-    ("M-l" . vice-save-line)
-    ("C-l" . vice-yank-line)
-    ("e" . vice-kill-end-of-line)
-    ("M-e" . vice-save-end-of-line))
-  "Alist of key suffixes to the classic vice commands.")
-
-;;;###autoload
-(defun vice-install-legacy-bindings (&optional prefix)
-  "Bind the classic vice commands under PREFIX in `vice-map'.
-PREFIX defaults to `vice-legacy-key-prefix'.  These are the pre-grammar
-single-key commands; `vice-dispatch' on `vice-key-prefix' supersedes
-them, so they are opt-in."
-  (interactive)
-  (let ((prefix (or prefix vice-legacy-key-prefix)))
-    (dolist (binding vice--legacy-bindings)
-      (define-key vice-map
-                  (kbd (concat prefix " " (car binding)))
-                  (cdr binding)))))
 
 ;;;###autoload
 (define-minor-mode vice-mode
