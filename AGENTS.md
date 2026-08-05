@@ -50,7 +50,7 @@ There is no separate lint/build step; `Makefile` only defines `test`.
     `(:treesit THING)` — and `vice--object-bounds` tries them in order,
     returning the first `(start end)` found.
   - **Operators**: `vice--op-*` functions of `(start end)`, collected in
-    `vice-operator-alist` (keys `d y c ; v r =`), applied by `vice--apply`
+    `vice-operator-alist` (keys `d y ; v r =`), applied by `vice--apply`
     inside an `atomic-change-group` (one undo step per operation).
   - **Dispatch**: `vice-dispatch` (the sole `;;;###autoload` command) reads
     `[count] operator [a|i] object` with `read-char-exclusive`, resolves

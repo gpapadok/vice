@@ -105,12 +105,6 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
   (should (equal (car (vice-test--run "(foo (bar))" 8 ?d ?\( 'a)) "(foo )"))
   (should (equal (car (vice-test--run "(foo (bar))" 8 ?d ?\( 'i)) "(foo ())")))
 
-(ert-deftest vice--apply-change-test ()
-  ;; c i ( empties the pair and leaves point inside it
-  (pcase-let ((`(,text ,pt) (vice-test--run "(foo (bar))" 8 ?c ?\( 'i)))
-    (should (equal text "(foo ())"))
-    (should (= pt 7))))
-
 (ert-deftest vice--apply-save-test ()
   ;; y copies without modifying the buffer
   (with-temp-buffer

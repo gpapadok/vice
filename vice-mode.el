@@ -24,10 +24,10 @@
 ;;     [count] operator [a|i] object
 ;;
 ;; For example "C-c v d a (" deletes the surrounding parentheses,
-;; "C-c v c i \"" changes the contents of a string, and
+;; "C-c v y i \"" copies the contents of a string, and
 ;; "C-c v 2 d a (" deletes two levels of enclosing parentheses.
 ;;
-;; Operators come from `vice-operator-alist' (d y c ; v r =) and
+;; Operators come from `vice-operator-alist' (d y ; v r =) and
 ;; objects from `vice-object-alist' (brackets, strings, word, symbol,
 ;; paragraph, function, ...).  Objects resolve through syntax-table,
 ;; thing-at-point, and tree-sitter providers, so the grammar works
@@ -197,11 +197,6 @@ OBJECT is a character key in `vice-object-alist'.  MODIFIER is `a' or
   "Copy the region START..END to the kill ring."
   (kill-ring-save start end))
 
-(defun vice--op-change (start end)
-  "Kill the region START..END and leave point in the resulting hole."
-  (kill-region start end)
-  (goto-char start))
-
 (defun vice--op-comment (start end)
   "Comment or uncomment the region START..END."
   (comment-or-uncomment-region start end))
@@ -224,7 +219,6 @@ OBJECT is a character key in `vice-object-alist'.  MODIFIER is `a' or
 (defvar vice-operator-alist
   '((?d . vice--op-kill)
     (?y . vice--op-save)
-    (?c . vice--op-change)
     (?\; . vice--op-comment)
     (?v . vice--op-select)
     (?r . vice--op-replace)
@@ -248,7 +242,7 @@ OPERATOR is a function of two arguments as stored in
 ;;;###autoload
 (defun vice-dispatch (&optional arg)
   "Read and run a vice operation: [count] operator [a|i] object.
-The operator is one of `vice-operator-alist' (d y c ; v r =), the
+The operator is one of `vice-operator-alist' (d y ; v r =), the
 modifier is `a' (around) or `i' (inside), and the object is a key in
 `vice-object-alist'.  A numeric prefix ARG, or leading digits, sets the
 count where the object supports it.  \\[keyboard-quit] aborts at any

@@ -55,7 +55,7 @@ The prefix key (~vice-key-prefix~, default ~C-c v~) runs
 |-----------------+---------------------------------------------|
 | ~C-c v d a (~   | delete the surrounding parentheses and body |
 | ~C-c v d i (~   | delete inside the surrounding parentheses   |
-| ~C-c v c i "~   | change the contents of a string             |
+| ~C-c v y i "~   | copy the contents of a string               |
 | ~C-c v y a [~   | copy the surrounding brackets and body      |
 | ~C-c v 2 d a (~ | delete two levels of enclosing parentheses  |
 | ~C-c v d i w~   | delete a word                               |
@@ -69,7 +69,6 @@ From ~vice-operator-alist~:
 |-----+-------------------------------------------|
 | ~d~ | kill (delete to the kill ring)            |
 | ~y~ | save (copy to the kill ring)              |
-| ~c~ | change (kill and leave point in the hole) |
 | ~;~ | comment or uncomment                      |
 | ~v~ | select (activate the region)              |
 | ~r~ | replace with the head of the kill ring    |
