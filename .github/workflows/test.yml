@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  test:
+    name: Test (Emacs ${{ matrix.emacs_version }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.allow_failure || false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - emacs_version: '29.1'      # Package-Requires floor
+          - emacs_version: '30.2'      # current stable
+          - emacs_version: 'snapshot'  # unreleased trunk (early warning)
+            allow_failure: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs_version }}
+      - name: Byte-compile (warnings are errors)
+        run: |
+          emacs -Q --batch -L . \
+            --eval "(setq byte-compile-error-on-warn t)" \
+            -f batch-byte-compile vice-mode.el
+      - name: Run ERT suite
+        run: make test
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: purcell/setup-emacs@master
+        with:
+          version: '30.2'
+      - name: Checkdoc
+        run: |
+          emacs -Q --batch --eval "(let ((n 0)) (advice-add 'checkdoc-create-error :before (lambda (&rest _) (setq n (1+ n)))) (checkdoc-file \"vice-mode.el\") (kill-emacs (if (> n 0) 1 0)))"
+      - name: package-lint
+        run: |
+          emacs -Q --batch \
+            --eval "(require 'package)" \
+            --eval "(add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t)" \
+            --eval "(package-initialize)" \
+            --eval "(package-refresh-contents)" \
+            --eval "(package-install 'package-lint)"
+          emacs -Q --batch \
+            --eval "(require 'package)" \
+            --eval "(package-initialize)" \
+            -l package-lint -f package-lint-batch-and-exit vice-mode.el
