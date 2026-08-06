@@ -1,18 +1,28 @@
-;;; vice-mode.el --- VIm Like Commands Extension for emacs -*- lexical-binding: t; -*-
+;;; vice-mode.el --- VIm-like Commands Extension -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023 Giorgos Papadokostakis
 
 ;; Author: Giorgos Papadokostakis <giorgos.papadokostakis@proton.me>
 ;; Created: 13 December 2023
-;; Name: Vice
 ;; Version: 0.2.0
-;; Keywords: vi, commands
+;; Keywords: convenience, emulations
 ;; URL: https://github.com/gpapadok/vice
 ;; Package-Requires: ((emacs "29.1"))
 
 ;; This file is not part of GNU Emacs.
 
-;; This file is free software.
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -171,7 +181,7 @@ has one."
     (?f  (:treesit defun) (:thing defun)))
   "Alist mapping an object character to a list of provider specs.
 Each spec is one of (:pair OPEN), (:string QUOTE), (:thing THING), or
-(:treesit THING); `vice--object-bounds' tries them in order and returns
+\(:treesit THING); `vice--object-bounds' tries them in order and returns
 the first bounds found.  Both members of a delimiter pair map to the
 same object.")
 
