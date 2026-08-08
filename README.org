@@ -10,6 +10,25 @@ and multiplies a small set of operators by a small set of text objects.
 It adds on top of the vanilla Emacs navigation flow without revamping
 Emacs keybinds.
 
+** Why vice
+
+- *Composable.* A few operators times a few text objects give many
+  commands, with nothing to memorize per command — just the grammar.
+- *No modal state.* There is no normal/insert toggle to track; you invoke
+  one whole operation and stay in ordinary Emacs editing.
+- *No rebinding.* Native Emacs keys are untouched — the whole grammar
+  lives behind a single prefix (~C-c v~).
+- *Beyond Lisp.* Objects resolve through the syntax table,
+  ~thing-at-point~, and tree-sitter, so pairs, strings, words, and
+  functions work across major modes.
+- *Tiny.* One file, no dependencies beyond Emacs 29.1.
+
+** vice vs. alternatives
+
+Most Vim-style editing packages for Emacs ask you to adopt a mode or a new
+key layer. vice keeps just the part that makes Vim editing productive —
+the ~operator + text object~ grammar — and nothing else.
+
 ** Installation
 
 With ~use-package~ and straight.el.
@@ -32,6 +51,9 @@ Otherwise clone the repo and add it to your load path.
   (require 'vice-mode)
   (vice-mode 1)
 #+end_src
+
+Then try ~C-c v d i w~ to delete a word, or ~C-c v d i (~ to clear the
+enclosing parentheses.
 
 ** The grammar
 
