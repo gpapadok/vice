@@ -2,6 +2,10 @@
 #+author: Giorgos Papadokostakis
 #+date: 2024-02-21
 
+[[https://github.com/gpapadok/vice/actions/workflows/test.yml][https://github.com/gpapadok/vice/actions/workflows/test.yml/badge.svg]]
+# Uncomment once vice-mode is on MELPA:
+# [[https://melpa.org/#/vice-mode][https://melpa.org/packages/vice-mode-badge.svg]]
+
 ~vice~ (VIm-like Commands Extension for Emacs) brings Vim's composable
 "operator + text object" editing to Emacs without modal state. Instead
 of one command per key, it reads a whole operation from a single prefix
@@ -9,6 +13,8 @@ and multiplies a small set of operators by a small set of text objects.
 
 It adds on top of the vanilla Emacs navigation flow without revamping
 Emacs keybinds.
+
+[[file:demo.gif]]
 
 ** Why vice
 
