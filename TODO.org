@@ -1,0 +1,24 @@
+#+title: TODO
+
+Ideas.
+
+** Capabilities
+
+- [ ] Make ~vice-operator-alist~ / ~vice-object-alist~ genuinely
+  user-extensible: ~vice-define-operator~ / ~vice-define-object~ macros
+  (or a documented, validated ~add-to-list~ pattern), so vice is a
+  grammar engine ("any function of ~(start end)~ is an operator, any
+  provider is an object") rather than a fixed feature set.
+- [ ] Add a surround/wrap operator (object -> wrapped in a delimiter).
+- [ ] More tree-sitter-backed objects, now that ~vice--treesit-bounds~
+  exists: argument/parameter, call expression, class/struct, heading
+  (org/markdown), tag pair (html/jsx).
+- [ ] Dot-repeat: re-run the last operator+modifier+object at the new
+  point.
+
+** Ergonomics
+
+- [ ] Transient-based prompt instead of bare ~read-char-exclusive~,
+  showing available operators/objects live as the grammar is typed.
+- [ ] Preview the resolved ~(start end)~ region before applying the
+  operator (e.g. ~pulse-momentary-highlight-region~).
