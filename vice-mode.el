@@ -3,6 +3,7 @@
 ;; Copyright (C) 2023 Giorgos Papadokostakis
 
 ;; Author: Giorgos Papadokostakis <giorgos.papadokostakis@proton.me>
+;; Assisted-by: Claude Sonnet 5 <noreply@anthropic.com>
 ;; Created: 13 December 2023
 ;; Version: 0.2.0
 ;; Keywords: convenience, emulations
