@@ -5,7 +5,7 @@
 ;; Author: Giorgos Papadokostakis <giorgos.papadokostakis@proton.me>
 ;; Assisted-by: Claude Sonnet 5 <noreply@anthropic.com>
 ;; Created: 13 December 2023
-;; Version: 0.2.0
+;; Version: 0.2.1
 ;; Keywords: convenience, emulations
 ;; URL: https://github.com/gpapadok/vice
 ;; Package-Requires: ((emacs "29.1"))
