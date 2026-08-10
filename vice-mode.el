@@ -56,9 +56,17 @@
   :prefix "vice-")
 
 (defcustom vice-key-prefix "C-c v"
-  "Key prefix bound to `vice-dispatch' in `vice-map'."
+  "Key prefix bound to `vice-dispatch' in `vice-map'.
+Setting this via `customize-set-variable' or `setopt' rebinds
+`vice-map' to the new key, removing the old binding."
   :type 'string
-  :group 'vice)
+  :group 'vice
+  :set (lambda (sym val)
+         (let ((old (and (boundp sym) (symbol-value sym))))
+           (set-default sym val)
+           (when (boundp 'vice-map)
+             (when old (define-key vice-map (kbd old) nil))
+             (define-key vice-map (kbd val) #'vice-dispatch)))))
 
 ;; Text objects
 
