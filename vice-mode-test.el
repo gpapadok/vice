@@ -105,6 +105,21 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
   (should (equal (car (vice-test--run "(foo (bar))" 8 ?d ?\( 'a)) "(foo )"))
   (should (equal (car (vice-test--run "(foo (bar))" 8 ?d ?\( 'i)) "(foo ())")))
 
+(ert-deftest vice--apply-kill-no-merge-test ()
+  ;; Consecutive kills through vice--apply land as separate kill-ring
+  ;; entries, even though last-command looks like a prior kill-region.
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "foo bar")
+    (let (kill-ring kill-ring-yank-pointer (last-command 'kill-region))
+      (goto-char 5)
+      (pcase (vice--object-bounds ?w 'i)
+        (`(,start ,end) (vice--apply #'vice--op-kill start end)))
+      (goto-char 1)
+      (pcase (vice--object-bounds ?w 'i)
+        (`(,start ,end) (vice--apply #'vice--op-kill start end)))
+      (should (equal kill-ring '("foo" "bar"))))))
+
 (ert-deftest vice--apply-save-test ()
   ;; y copies without modifying the buffer
   (with-temp-buffer
@@ -179,8 +194,25 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
       (should (equal (current-kill 0) "(bar)")))))
 
 (ert-deftest vice-dispatch-no-object-test ()
-  ;; No object at point: buffer unchanged, no error.
-  (should (equal (car (vice-test--dispatch "  foo" 4 "da(")) "  foo")))
+  ;; No object at point: user-error, buffer unchanged.
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "  foo")
+    (goto-char 4)
+    (let ((unread-command-events (listify-key-sequence "da(")))
+      (should-error (vice-dispatch) :type 'user-error))
+    (should (equal (buffer-string) "  foo"))))
+
+(ert-deftest vice-dispatch-bad-input-test ()
+  ;; An unknown operator key and a bad modifier each signal user-error.
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "(foo)")
+    (goto-char 3)
+    (let ((unread-command-events (listify-key-sequence "x")))
+      (should-error (vice-dispatch) :type 'user-error))
+    (let ((unread-command-events (listify-key-sequence "dx(")))
+      (should-error (vice-dispatch) :type 'user-error))))
 
 (ert-deftest vice-map-binds-dispatch-test ()
   ;; The prefix key runs the grammar reader.

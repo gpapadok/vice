@@ -113,9 +113,9 @@ MODIFIER is `a' to include the quote characters or `i' for the
 contents.  QUOTE, when non-nil, requires that opening quote character."
   (let* ((ppss (syntax-ppss))
          (start (cond
-                 ((nth 3 ppss) (nth 8 ppss))              ; inside a string
+                 ((nth 3 ppss) (nth 8 ppss)) ; inside a string
                  ((eq (char-syntax (or (char-after) ?\s)) ?\")
-                  (point)))))                             ; on an opening quote
+                  (point)))))           ; on an opening quote
     (when (and start (or (null quote) (eq (char-after start) quote)))
       (save-excursion
         (goto-char start)
@@ -246,9 +246,13 @@ The function receives the START and END of the region to act on.")
 (defun vice--apply (operator start end)
   "Run OPERATOR on the region START..END as a single undo step.
 OPERATOR is a function of two arguments as stored in
-`vice-operator-alist'."
-  (atomic-change-group
-    (funcall operator start end)))
+`vice-operator-alist'.  Each kill starts its own kill-ring entry."
+  ;; `kill-region' and `copy-region-as-kill' append to the previous
+  ;; kill when `last-command' is `kill-region', so two vice kills in a
+  ;; row would otherwise merge; force a fresh entry every time.
+  (let ((last-command nil))
+    (atomic-change-group
+      (funcall operator start end))))
 
 ;; Dispatch
 
@@ -274,22 +278,19 @@ point."
                 seen t
                 char (read-char-exclusive (format "vice %d:" n))))
         (when seen (setq count n))))
-    (let ((operator (assq char vice-operator-alist)))
-      (cond
-       ((null operator)
-        (message "vice: %s is not an operator" (single-key-description char)))
-       (t
-        (let* ((op-str (char-to-string char))
-               (mchar (read-char-exclusive (format "vice %s [a/i]:" op-str)))
-               (modifier (pcase mchar (?a 'a) (?i 'i))))
-          (if (null modifier)
-              (message "vice: expected `a' or `i'")
-            (let ((object (read-char-exclusive (format "vice %s%c:" op-str mchar))))
-              (pcase (vice--object-bounds object modifier count)
-                (`(,start ,end)
-                 (vice--apply (cdr operator) start end))
-                (_ (message "vice: no %s object at point"
-                            (single-key-description object))))))))))))
+    (let* ((operator (or (cdr (assq char vice-operator-alist))
+                          (user-error "vice: %s is not an operator"
+                                      (single-key-description char))))
+           (op-str (char-to-string char))
+           (mchar (read-char-exclusive (format "vice %s [a/i]:" op-str)))
+           (modifier (pcase mchar
+                       (?a 'a) (?i 'i)
+                       (_ (user-error "vice: expected `a' or `i'"))))
+           (object (read-char-exclusive (format "vice %s%c:" op-str mchar)))
+           (bounds (or (vice--object-bounds object modifier count)
+                       (user-error "vice: no %s object at point"
+                                   (single-key-description object)))))
+      (vice--apply operator (car bounds) (cadr bounds)))))
 
 ;; Minor mode
 
