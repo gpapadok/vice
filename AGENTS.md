@@ -24,17 +24,21 @@ This runs `emacs -Q --batch -L . -l vice-mode-test.el -f ert-run-tests-batch-and
 loading the package fresh (no user init file) and executing all `ert-deftest`
 forms in `vice-mode-test.el`.
 
-To run a single test, invoke Emacs batch mode directly with `-f`:
+To run a single test, pass its name as the selector:
 
 ```sh
-emacs -Q --batch -L . -l vice-mode-test.el -f ert-run-tests-batch-and-exit \
+emacs -Q --batch -L . -l vice-mode-test.el \
   --eval "(ert-run-tests-batch-and-exit 'vice-dispatch-test)"
 ```
 
 or more simply, load `vice-mode-test.el` in an interactive Emacs session and
 use `M-x ert RET <test-name> RET`.
 
-There is no separate lint/build step; `Makefile` only defines `test`.
+Byte-compile with warnings as errors (same check as CI):
+
+```sh
+make compile
+```
 
 ## Architecture
 
@@ -51,7 +55,7 @@ There is no separate lint/build step; `Makefile` only defines `test`.
     returning the first `(start end)` found.
   - **Operators**: `vice--op-*` functions of `(start end)`, collected in
     `vice-operator-alist` (keys `d y ; v r =`), applied by `vice--apply`
-    inside an `atomic-change-group` (one undo step per operation).
+    inside an `atomic-change-group` (partial changes roll back on error).
   - **Dispatch**: `vice-dispatch` (the sole `;;;###autoload` command) reads
     `[count] operator [a|i] object` with `read-char-exclusive`, resolves
     bounds, and applies the operator.

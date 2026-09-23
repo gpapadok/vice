@@ -38,15 +38,15 @@ Findings from a code review of ~vice-mode.el~ (2026-09-24).
 
 ** Docs and tests
 
-- [ ] The single-test command in ~AGENTS.md~ is wrong: ~-f
+- [X] The single-test command in ~AGENTS.md~ is wrong: ~-f
   ert-run-tests-batch-and-exit~ runs all tests and exits before the
   ~--eval~. Use ~emacs -Q --batch -L . -l vice-mode-test.el --eval
   "(ert-run-tests-batch-and-exit 'vice-dispatch-test)"~.
-- [ ] ~vice--apply~ docstring: the single undo step comes from the
+- [X] ~vice--apply~ docstring: the single undo step comes from the
   command loop; ~atomic-change-group~ provides rollback on error (e.g.
   ~r~ with an empty kill ring).
-- [ ] Missing tests: operators ~;~ and ~=~, object ~p~, unbalanced
-  input, customizing ~vice-key-prefix~ (fix 3c8fa04 has no test).
-- [ ] ~.dir-locals.el~ holds only comments; delete it.
-- [ ] Add a ~compile~ target to the ~Makefile~ running the same
+- [X] Missing tests: operators ~;~ and ~=~, object ~p~,
+  customizing ~vice-key-prefix~ (fix 3c8fa04 has no test).
+- [X] ~.dir-locals.el~ holds only comments; delete it.
+- [X] Add a ~compile~ target to the ~Makefile~ running the same
   byte-compile as CI, so local checks match CI.

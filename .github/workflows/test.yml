@@ -24,10 +24,7 @@ jobs:
         with:
           version: ${{ matrix.emacs_version }}
       - name: Byte-compile (warnings are errors)
-        run: |
-          emacs -Q --batch -L . \
-            --eval "(setq byte-compile-error-on-warn t)" \
-            -f batch-byte-compile vice-mode.el
+        run: make compile
       - name: Run ERT suite
         run: make test
 
