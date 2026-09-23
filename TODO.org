@@ -61,7 +61,7 @@ native Emacs (~C-M-u C-M-k~, ~M-h~, ~C-M-h~) and ~change-inner~ /
 
 - [X] Pulse the resolved region after applying
   (~pulse-momentary-highlight-region~), so ~y~ shows what was copied.
-- [ ] Object aliases in the style of targets.vim, so the common cases
+- [X] Object aliases in the style of targets.vim, so the common cases
   need no Shift: ~q~ any quote (~(:string nil)~, already supported),
   ~b~ for ~(~, ~B~ for ~{~.
 - [ ] ~?~ in ~vice-dispatch~ lists the operators and objects.

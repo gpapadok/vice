@@ -106,17 +106,17 @@ From ~vice-operator-alist~:
 
 From ~vice-object-alist~:
 
-| Key     | Object                                            |
-|---------+---------------------------------------------------|
-| ~(~ ~)~ | the nearest enclosing parentheses                 |
-| ~[~ ~]~ | the nearest enclosing square brackets             |
-| ~{~ ~}~ | the nearest enclosing curly braces                |
-| ~m~     | the nearest enclosing pair of any type            |
-| ~"~ ~'~ | the enclosing string                              |
-| ~w~     | a word                                            |
-| ~s~     | a symbol                                          |
-| ~p~     | a paragraph                                       |
-| ~f~     | a function (via tree-sitter, or ~defun~ at point) |
+| Key         | Object                                            |
+|-------------+---------------------------------------------------|
+| ~(~ ~)~ ~b~ | the nearest enclosing parentheses                 |
+| ~[~ ~]~     | the nearest enclosing square brackets             |
+| ~{~ ~}~ ~B~ | the nearest enclosing curly braces                |
+| ~m~         | the nearest enclosing pair of any type            |
+| ~"~ ~'~ ~q~ | the enclosing string                              |
+| ~w~         | a word                                            |
+| ~s~         | a symbol                                          |
+| ~p~         | a paragraph                                       |
+| ~f~         | a function (via tree-sitter, or ~defun~ at point) |
 
 Delimiter and string objects are found with the syntax table, so they
 work in any major mode; ~w~/~s~/~p~ use ~thing-at-point~; ~f~ prefers

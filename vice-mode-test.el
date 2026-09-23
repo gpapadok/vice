@@ -100,6 +100,14 @@ syntax."
   ;; An unregistered object character yields nil, not an error.
   (should (null (vice-test--object-bounds "(foo)" 3 ?z 'a))))
 
+(ert-deftest vice--object-bounds-alias-test ()
+  ;; q is any quote, b is (, B is {.
+  (should (equal (vice-test--object-bounds "(f \"foo\")" 5 ?q 'i) '(5 8)))
+  (should (equal (vice-test--object-bounds "(f \"foo\")" 5 ?q 'a) '(4 9)))
+  (should (equal (vice-test--object-bounds "(foo (bar))" 8 ?b 'i) '(7 10)))
+  (should (equal (cdr (assq ?B vice-object-alist))
+                 (cdr (assq ?\{ vice-object-alist)))))
+
 (defun vice-test--run (before position operator object modifier)
   "Apply OPERATOR to OBJECT/MODIFIER at POSITION in BEFORE.
 Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
