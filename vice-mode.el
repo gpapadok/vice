@@ -290,8 +290,8 @@ was not a digit."
 The operator is one of `vice-operator-alist' (d y ; v r =), the
 modifier is `a' (around) or `i' (inside), and the object is a key in
 `vice-object-alist'.  A numeric prefix ARG, or leading digits, sets the
-count where the object supports it.  \\[keyboard-quit] aborts at any
-point."
+count where the object supports it; an error is signaled otherwise.
+\\[keyboard-quit] aborts at any point."
   (interactive "P")
   (pcase-let* ((char (read-char-exclusive (format "vice [%s]:" (vice--operator-keys))))
                (`(,count . ,char) (if arg
@@ -306,10 +306,14 @@ point."
                        (?a 'a) (?i 'i)
                        (_ (user-error "vice: Expected `a' or `i'"))))
            (object (read-char-exclusive (format "vice %s%c:" op-str mchar)))
-           (bounds (or (vice--object-bounds object modifier count)
-                       (user-error "vice: No %s object at point"
-                                   (single-key-description object)))))
-      (vice--apply operator (car bounds) (cadr bounds)))))
+           (specs (cdr (assq object vice-object-alist))))
+      (when (and count (not (assq :pair specs)))
+        (user-error "vice: Object %s does not accept a count"
+                    (single-key-description object)))
+      (let ((bounds (or (vice--object-bounds object modifier count)
+                        (user-error "vice: No %s object at point"
+                                    (single-key-description object)))))
+        (vice--apply operator (car bounds) (cadr bounds))))))
 
 ;; Minor mode
 

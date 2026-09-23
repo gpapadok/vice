@@ -70,8 +70,8 @@ The prefix key (~vice-key-prefix~, default ~C-c v~) runs
   [count] operator [a|i] object
 #+end_example
 
-- ~count~ — an optional repeat, ascending that many levels where the
-  object supports it (e.g. nested pairs).
+- ~count~ — an optional repeat, ascending that many levels for delimiter
+  pairs; an error is signaled if given to other objects.
 - ~operator~ — what to do.
 - ~a~ / ~i~ — /around/ (include the delimiters) or /inside/ (the
   contents only), as in Vim's ~da(~ vs ~di(~.

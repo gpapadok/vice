@@ -266,6 +266,14 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
     (let ((unread-command-events (listify-key-sequence "dx(")))
       (should-error (vice-dispatch) :type 'user-error))))
 
+(ert-deftest vice-dispatch-count-unsupported-test ()
+  ;; Objects without :pair specs reject a count.
+  (vice-test--with-buffer "foo bar" 2
+    (let ((unread-command-events (listify-key-sequence "2diw")))
+      (should-error (vice-dispatch) :type 'user-error)))
+  ;; Objects with :pair specs accept a count.
+  (should (equal (car (vice-test--dispatch "(foo (bar))" 8 "2da(")) "")))
+
 (ert-deftest vice-map-binds-dispatch-test ()
   ;; The prefix key runs the grammar reader.
   (should (eq (lookup-key vice-map (kbd vice-key-prefix)) #'vice-dispatch)))
