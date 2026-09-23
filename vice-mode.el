@@ -243,9 +243,13 @@ OBJECT is a character key in `vice-object-alist'.  MODIFIER is `a' or
 The function receives the START and END of the region to act on.")
 
 (defun vice--apply (operator start end)
-  "Run OPERATOR on the region START..END as a single undo step.
+  "Run OPERATOR on the region START..END, undoing it if OPERATOR errors.
 OPERATOR is a function of two arguments as stored in
-`vice-operator-alist'.  Each kill starts its own kill-ring entry."
+`vice-operator-alist'.  The command loop's undo boundaries already make
+the whole operation a single undo step; wrapping it in
+`atomic-change-group' additionally rolls back any partial change when
+OPERATOR signals, e.g. `r' having already deleted the region before
+failing to yank.  Each kill starts its own `kill-ring' entry."
   ;; `kill-region' and `copy-region-as-kill' append to the previous
   ;; kill when `last-command' is `kill-region', so two vice kills in a
   ;; row would otherwise merge; force a fresh entry every time.

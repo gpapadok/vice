@@ -88,6 +88,13 @@ syntax."
   ;; symbol spans the hyphenated name in emacs-lisp-mode
   (should (equal (vice-test--object-bounds "foo-bar baz" 3 ?s 'i) '(1 8))))
 
+(ert-deftest vice--object-bounds-paragraph-test ()
+  ;; Two paragraphs separated by a blank line; from inside the second,
+  ;; bounds cover "\n(baz)\n(qux)\n" -- the second paragraph plus the
+  ;; blank-line separator that forward-paragraph includes.
+  (let ((s "(foo)\n(bar)\n\n(baz)\n(qux)\n"))
+    (should (equal (vice-test--object-bounds s 15 ?p 'a) '(13 26)))))
+
 (ert-deftest vice--object-bounds-unknown-test ()
   ;; An unregistered object character yields nil, not an error.
   (should (null (vice-test--object-bounds "(foo)" 3 ?z 'a))))
@@ -139,6 +146,23 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
         (`(,start ,end)
          (vice--apply #'vice--op-replace start end)))
       (should (equal (buffer-string) "(foo BAZ)")))))
+
+(ert-deftest vice--apply-comment-paragraph-test ()
+  ;; ; a p toggles line comments on the paragraph at point; applying it
+  ;; again on the same bounds uncomments back to the original text.
+  (let ((s "(foo)\n(bar)\n"))
+    (vice-test--with-buffer s 1
+      (pcase (vice--object-bounds ?p 'a nil)
+        (`(,start ,end) (vice--apply #'vice--op-comment start end)))
+      (should (equal (buffer-string) ";; (foo)\n;; (bar)\n"))
+      (pcase (vice--object-bounds ?p 'a nil)
+        (`(,start ,end) (vice--apply #'vice--op-comment start end)))
+      (should (equal (buffer-string) s)))))
+
+(ert-deftest vice--apply-indent-test ()
+  ;; = a ( reindents a mis-indented body to match its enclosing form.
+  (should (equal (car (vice-test--run "(defun foo ()\n1)" 15 ?= ?\( 'a))
+                  "(defun foo ()\n  1)")))
 
 (ert-deftest vice--apply-select-test ()
   ;; v activates the region spanning the object
@@ -206,6 +230,17 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
 (ert-deftest vice-map-binds-dispatch-test ()
   ;; The prefix key runs the grammar reader.
   (should (eq (lookup-key vice-map (kbd vice-key-prefix)) #'vice-dispatch)))
+
+(ert-deftest vice-key-prefix-customize-rebinds-test ()
+  ;; Customizing vice-key-prefix rebinds vice-map to the new key and
+  ;; unbinds the old one.
+  (let ((original vice-key-prefix))
+    (unwind-protect
+        (progn
+          (customize-set-variable 'vice-key-prefix "C-c x")
+          (should (eq (lookup-key vice-map (kbd "C-c x")) #'vice-dispatch))
+          (should (null (lookup-key vice-map (kbd "C-c v")))))
+      (customize-set-variable 'vice-key-prefix original))))
 
 (ert-deftest vice--object-bounds-treesit-function-test ()
   ;; The f object resolves a whole function (a) or its body (i) via
