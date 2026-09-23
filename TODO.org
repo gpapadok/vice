@@ -1,0 +1,52 @@
+#+title: TODO
+
+Findings from a code review of ~vice-mode.el~ (2026-09-24).
+
+** Bugs
+
+- [ ] Unbalanced input signals ~scan-error~. ~forward-sexp~ in
+  ~vice--pair-bounds~ and ~vice--string-bounds~ errors on an unclosed
+  pair or string (e.g. ~da(~ in ~(foo (bar~), which is common while
+  typing. Return nil instead (~ignore-errors~) so dispatch reports "no
+  object at point". Add a test.
+
+** Deferred
+
+- [ ] Default ~vice-key-prefix~ (~C-c v~) is in the ~C-c <letter>~
+  space reserved for users by the Emacs key binding conventions.
+  Already accepted on MELPA as is; revisit if it becomes an issue
+  (e.g. default to nil and document binding it).
+
+** Simplifications
+
+- [ ] Dead branch in ~vice--pair-bounds~ for ~i~: a balanced pair always
+  has ~end >= start + 2~, so the ~if~ equals ~(list (1+ start) (1- end))~.
+- [ ] ~vice--pair-bounds~ and ~vice--string-bounds~ share "go to start,
+  ~forward-sexp~, a/i". Extract a ~vice--sexp-bounds (start modifier)~
+  helper; the unbalanced-input fix then lives in one place.
+- [ ] Drop the four one-line operator wrappers (~vice--op-kill~,
+  ~vice--op-save~, ~vice--op-comment~, ~vice--op-indent~) and put
+  ~kill-region~, ~kill-ring-save~, ~comment-or-uncomment-region~ and
+  ~indent-region~ directly in ~vice-operator-alist~.
+- [ ] Extract the leading-digit count loop of ~vice-dispatch~ into a
+  ~vice--read-count~ helper.
+- [ ] Replace the ~setq end~ in ~vice--thing-bounds~ with a ~let~ that
+  computes the final ~end~ directly.
+- [ ] Test helpers repeat ~with-temp-buffer~ / ~emacs-lisp-mode~ /
+  ~insert~ / ~goto-char~ in ~8 places; fold into one
+  ~vice-test--with-buffer~ macro.
+
+** Docs and tests
+
+- [ ] The single-test command in ~AGENTS.md~ is wrong: ~-f
+  ert-run-tests-batch-and-exit~ runs all tests and exits before the
+  ~--eval~. Use ~emacs -Q --batch -L . -l vice-mode-test.el --eval
+  "(ert-run-tests-batch-and-exit 'vice-dispatch-test)"~.
+- [ ] ~vice--apply~ docstring: the single undo step comes from the
+  command loop; ~atomic-change-group~ provides rollback on error (e.g.
+  ~r~ with an empty kill ring).
+- [ ] Missing tests: operators ~;~ and ~=~, object ~p~, unbalanced
+  input, customizing ~vice-key-prefix~ (fix 3c8fa04 has no test).
+- [ ] ~.dir-locals.el~ holds only comments; delete it.
+- [ ] Add a ~compile~ target to the ~Makefile~ running the same
+  byte-compile as CI, so local checks match CI.
