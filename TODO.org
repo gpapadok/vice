@@ -19,20 +19,20 @@ Findings from a code review of ~vice-mode.el~ (2026-09-24).
 
 ** Simplifications
 
-- [ ] Dead branch in ~vice--pair-bounds~ for ~i~: a balanced pair always
+- [X] Dead branch in ~vice--pair-bounds~ for ~i~: a balanced pair always
   has ~end >= start + 2~, so the ~if~ equals ~(list (1+ start) (1- end))~.
-- [ ] ~vice--pair-bounds~ and ~vice--string-bounds~ share "go to start,
+- [X] ~vice--pair-bounds~ and ~vice--string-bounds~ share "go to start,
   ~forward-sexp~, a/i". Extract a ~vice--sexp-bounds (start modifier)~
   helper; the unbalanced-input fix then lives in one place.
 - [ ] Drop the four one-line operator wrappers (~vice--op-kill~,
   ~vice--op-save~, ~vice--op-comment~, ~vice--op-indent~) and put
   ~kill-region~, ~kill-ring-save~, ~comment-or-uncomment-region~ and
   ~indent-region~ directly in ~vice-operator-alist~.
-- [ ] Extract the leading-digit count loop of ~vice-dispatch~ into a
+- [X] Extract the leading-digit count loop of ~vice-dispatch~ into a
   ~vice--read-count~ helper.
-- [ ] Replace the ~setq end~ in ~vice--thing-bounds~ with a ~let~ that
+- [X] Replace the ~setq end~ in ~vice--thing-bounds~ with a ~let~ that
   computes the final ~end~ directly.
-- [ ] Test helpers repeat ~with-temp-buffer~ / ~emacs-lisp-mode~ /
+- [X] Test helpers repeat ~with-temp-buffer~ / ~emacs-lisp-mode~ /
   ~insert~ / ~goto-char~ in ~8 places; fold into one
   ~vice-test--with-buffer~ macro.
 

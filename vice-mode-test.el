@@ -12,14 +12,21 @@
 
 (require 'vice-mode)
 
+(defmacro vice-test--with-buffer (text position &rest body)
+  "Run BODY in an `emacs-lisp-mode' temp buffer holding TEXT.
+Insert TEXT, put point at POSITION, then evaluate BODY."
+  (declare (indent 2))
+  `(with-temp-buffer
+     (emacs-lisp-mode)
+     (insert ,text)
+     (goto-char ,position)
+     ,@body))
+
 (defun vice-test--pair-bounds (before position &rest args)
   "Return the result of `vice--pair-bounds' called with ARGS.
 Run in a temp buffer holding BEFORE with point at POSITION, in
 `emacs-lisp-mode' so that all bracket types carry paren syntax."
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert before)
-    (goto-char position)
+  (vice-test--with-buffer before position
     (apply #'vice--pair-bounds args)))
 
 (ert-deftest vice--pair-bounds-test ()
@@ -53,10 +60,7 @@ Run in a temp buffer holding BEFORE with point at POSITION, in
 Run in an `emacs-lisp-mode' temp buffer holding BEFORE with point at
 POSITION, so brackets carry paren syntax and \"\\\"\" carries string
 syntax."
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert before)
-    (goto-char position)
+  (vice-test--with-buffer before position
     (vice--object-bounds object modifier count)))
 
 (ert-deftest vice--object-bounds-pair-test ()
@@ -91,10 +95,7 @@ syntax."
 (defun vice-test--run (before position operator object modifier)
   "Apply OPERATOR to OBJECT/MODIFIER at POSITION in BEFORE.
 Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert before)
-    (goto-char position)
+  (vice-test--with-buffer before position
     (pcase (vice--object-bounds object modifier nil)
       (`(,start ,end)
        (vice--apply (cdr (assq operator vice-operator-alist)) start end)))
@@ -122,10 +123,7 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
 
 (ert-deftest vice--apply-save-test ()
   ;; y copies without modifying the buffer
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert "(foo (bar))")
-    (goto-char 8)
+  (vice-test--with-buffer "(foo (bar))" 8
     (let (kill-ring kill-ring-yank-pointer)
       (pcase (vice--object-bounds ?\( 'a nil)
         (`(,start ,end)
@@ -135,10 +133,7 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
 
 (ert-deftest vice--apply-replace-test ()
   ;; r swaps the object for the kill-ring head
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert "(foo (bar))")
-    (goto-char 8)
+  (vice-test--with-buffer "(foo (bar))" 8
     (let ((kill-ring '("BAZ")) kill-ring-yank-pointer)
       (pcase (vice--object-bounds ?\( 'a nil)
         (`(,start ,end)
@@ -147,10 +142,7 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
 
 (ert-deftest vice--apply-select-test ()
   ;; v activates the region spanning the object
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert "(foo (bar))")
-    (goto-char 8)
+  (vice-test--with-buffer "(foo (bar))" 8
     (pcase (vice--object-bounds ?\( 'a nil)
       (`(,start ,end)
        (vice--apply #'vice--op-select start end)))
@@ -164,13 +156,19 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
   "Run `vice-dispatch' reading KEYS at POSITION in BEFORE.
 KEYS is a key-sequence string fed through `unread-command-events'.
 Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert before)
-    (goto-char position)
+  (vice-test--with-buffer before position
     (let ((unread-command-events (listify-key-sequence keys)))
       (vice-dispatch))
     (list (buffer-string) (point))))
+
+(ert-deftest vice--read-count-test ()
+  ;; digits accumulate into a count; the first non-digit char is returned
+  (let ((unread-command-events (listify-key-sequence "2d")))
+    (should (equal (vice--read-count ?1) '(12 . ?d))))
+  ;; a non-digit first char: no count, no events consumed
+  (let ((unread-command-events (listify-key-sequence "d")))
+    (should (equal (vice--read-count ?d) '(nil . ?d)))
+    (should (equal unread-command-events (listify-key-sequence "d")))))
 
 (ert-deftest vice-dispatch-test ()
   ;; operator + a/i + object, end to end through the reader
@@ -183,10 +181,7 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
 
 (ert-deftest vice-dispatch-save-test ()
   ;; y copies without modifying the buffer
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert "(foo (bar))")
-    (goto-char 8)
+  (vice-test--with-buffer "(foo (bar))" 8
     (let (kill-ring kill-ring-yank-pointer
           (unread-command-events (listify-key-sequence "ya(")))
       (vice-dispatch)
@@ -195,20 +190,14 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
 
 (ert-deftest vice-dispatch-no-object-test ()
   ;; No object at point: user-error, buffer unchanged.
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert "  foo")
-    (goto-char 4)
+  (vice-test--with-buffer "  foo" 4
     (let ((unread-command-events (listify-key-sequence "da(")))
       (should-error (vice-dispatch) :type 'user-error))
     (should (equal (buffer-string) "  foo"))))
 
 (ert-deftest vice-dispatch-bad-input-test ()
   ;; An unknown operator key and a bad modifier each signal user-error.
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert "(foo)")
-    (goto-char 3)
+  (vice-test--with-buffer "(foo)" 3
     (let ((unread-command-events (listify-key-sequence "x")))
       (should-error (vice-dispatch) :type 'user-error))
     (let ((unread-command-events (listify-key-sequence "dx(")))
@@ -233,10 +222,7 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
 
 (ert-deftest vice--object-bounds-treesit-fallback-test ()
   ;; With no tree-sitter parser, f falls back to the defun thing.
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert "(defun foo () 1)")
-    (goto-char 8)
+  (vice-test--with-buffer "(defun foo () 1)" 8
     (should (equal (vice--object-bounds ?f 'a) '(1 17)))))
 
 ;;; vice-mode-test.el ends here

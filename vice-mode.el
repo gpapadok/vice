@@ -85,6 +85,17 @@ enclosing pair."
         (cons (point) opens)
       opens)))
 
+(defun vice--sexp-bounds (start modifier)
+  "Return (START END) for the sexp beginning at START, per MODIFIER.
+Moves to START and walks forward one sexp.  MODIFIER is `a' to
+include the sexp's own delimiters or `i' for its contents."
+  (save-excursion
+    (goto-char start)
+    (let ((end (progn (forward-sexp 1) (point))))
+      (pcase modifier
+        ('a (list start end))
+        ('i (list (1+ start) (1- end)))))))
+
 (defun vice--pair-bounds (modifier &optional open count)
   "Return (START END) of the bracket pair enclosing point, or nil.
 MODIFIER is `a' to include the delimiters or `i' for their contents.
@@ -98,14 +109,7 @@ levels (default 1)."
                       positions))
          (start (nth (1- (or count 1)) positions)))
     (when start
-      (save-excursion
-        (goto-char start)
-        (let ((end (progn (forward-sexp 1) (point))))
-          (pcase modifier
-            ('a (list start end))
-            ('i (if (< (1+ start) (1- end))
-                    (list (1+ start) (1- end))
-                  (list (1+ start) (1+ start))))))))))
+      (vice--sexp-bounds start modifier))))
 
 (defun vice--string-bounds (modifier &optional quote)
   "Return (START END) of the string enclosing point, or nil.
@@ -117,12 +121,7 @@ contents.  QUOTE, when non-nil, requires that opening quote character."
                  ((eq (char-syntax (or (char-after) ?\s)) ?\")
                   (point)))))           ; on an opening quote
     (when (and start (or (null quote) (eq (char-after start) quote)))
-      (save-excursion
-        (goto-char start)
-        (let ((end (progn (forward-sexp 1) (point))))
-          (pcase modifier
-            ('a (list start end))
-            ('i (list (1+ start) (1- end)))))))))
+      (vice--sexp-bounds start modifier))))
 
 (defun vice--thing-bounds (modifier thing)
   "Return (START END) for THING at point, or nil.
@@ -131,13 +130,13 @@ MODIFIER `a', a word or symbol extends over trailing whitespace, as
 in Vim's `aw'."
   (let ((bounds (bounds-of-thing-at-point thing)))
     (when bounds
-      (let ((start (car bounds))
-            (end (cdr bounds)))
-        (when (and (eq modifier 'a) (memq thing '(word symbol)))
-          (save-excursion
-            (goto-char end)
-            (skip-chars-forward " \t")
-            (setq end (point))))
+      (let* ((start (car bounds))
+             (end (if (and (eq modifier 'a) (memq thing '(word symbol)))
+                      (save-excursion
+                        (goto-char (cdr bounds))
+                        (skip-chars-forward " \t")
+                        (point))
+                    (cdr bounds))))
         (list start end)))))
 
 (defun vice--treesit-thing-spec (thing)
@@ -260,6 +259,18 @@ OPERATOR is a function of two arguments as stored in
   "Return the operator characters as a display string."
   (mapconcat (lambda (e) (char-to-string (car e))) vice-operator-alist ""))
 
+(defun vice--read-count (char)
+  "Read leading digits starting with CHAR, prompting \"vice %d:\".
+Return (COUNT . CHAR), where CHAR is the first non-digit character
+read and COUNT is the accumulated number, or nil when CHAR itself
+was not a digit."
+  (let ((n 0) (seen nil))
+    (while (<= ?0 char ?9)
+      (setq n (+ (* n 10) (- char ?0))
+            seen t
+            char (read-char-exclusive (format "vice %d:" n))))
+    (cons (and seen n) char)))
+
 ;;;###autoload
 (defun vice-dispatch (&optional arg)
   "Read and run a vice operation: [count] operator [a|i] object.
@@ -269,15 +280,10 @@ modifier is `a' (around) or `i' (inside), and the object is a key in
 count where the object supports it.  \\[keyboard-quit] aborts at any
 point."
   (interactive "P")
-  (let ((count (and arg (prefix-numeric-value arg)))
-        (char (read-char-exclusive (format "vice [%s]:" (vice--operator-keys)))))
-    (unless count
-      (let ((n 0) (seen nil))
-        (while (<= ?0 char ?9)
-          (setq n (+ (* n 10) (- char ?0))
-                seen t
-                char (read-char-exclusive (format "vice %d:" n))))
-        (when seen (setq count n))))
+  (pcase-let* ((char (read-char-exclusive (format "vice [%s]:" (vice--operator-keys))))
+               (`(,count . ,char) (if arg
+                                       (cons (prefix-numeric-value arg) char)
+                                     (vice--read-count char))))
     (let* ((operator (or (cdr (assq char vice-operator-alist))
                           (user-error "vice: %s is not an operator"
                                       (single-key-description char))))
