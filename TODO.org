@@ -59,7 +59,7 @@ native Emacs (~C-M-u C-M-k~, ~M-h~, ~C-M-h~) and ~change-inner~ /
 
 *** Cheap wins
 
-- [ ] Pulse the resolved region after applying
+- [X] Pulse the resolved region after applying
   (~pulse-momentary-highlight-region~), so ~y~ shows what was copied.
 - [ ] Object aliases in the style of targets.vim, so the common cases
   need no Shift: ~q~ any quote (~(:string nil)~, already supported),

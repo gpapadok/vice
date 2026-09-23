@@ -10,6 +10,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'vice-mode)
 
 (defmacro vice-test--with-buffer (text position &rest body)
@@ -175,6 +176,36 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
     (should mark-active)
     (should (= (point) 6))
     (should (= (mark t) 11))))
+
+(ert-deftest vice--apply-pulse-test ()
+  ;; Pulsing after applying: y pulses the copied region, d doesn't pulse
+  ;; (text is deleted), and r pulses the replacement.
+  (let (pulse-args)
+    (cl-letf (((symbol-function 'pulse-momentary-highlight-region)
+               (lambda (start end &optional face)
+                 (push (list (+ start 0) (+ end 0)) pulse-args))))
+      ;; y pulses the copied region
+      (vice-test--with-buffer "foo bar" 1
+        (pcase (vice--object-bounds ?w 'i nil)
+          (`(,start ,end)
+           (vice--apply #'vice--op-save start end))))
+      (should (equal (car pulse-args) '(1 4)))
+      (setq pulse-args nil)
+      ;; d doesn't pulse (region is deleted)
+      (vice-test--with-buffer "foo bar" 1
+        (pcase (vice--object-bounds ?w 'i nil)
+          (`(,start ,end)
+           (vice--apply #'vice--op-kill start end))))
+      (should (null pulse-args))
+      (setq pulse-args nil)
+      ;; r pulses the yanked text
+      (vice-test--with-buffer "foo bar" 1
+        (let ((kill-ring '("REPLACED")) kill-ring-yank-pointer)
+          (pcase (vice--object-bounds ?w 'i nil)
+            (`(,start ,end)
+             (vice--apply #'vice--op-replace start end))))
+        ;; Pulsed over the replaced text, which is "REPLACED" (8 chars)
+        (should (equal (car pulse-args) '(1 9)))))))
 
 (defun vice-test--dispatch (before position keys)
   "Run `vice-dispatch' reading KEYS at POSITION in BEFORE.

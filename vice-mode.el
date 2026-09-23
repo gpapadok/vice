@@ -48,6 +48,7 @@
 
 (require 'thingatpt)
 (require 'treesit nil t)
+(require 'pulse)
 
 ;; Custom
 
@@ -249,13 +250,18 @@ OPERATOR is a function of two arguments as stored in
 the whole operation a single undo step; wrapping it in
 `atomic-change-group' additionally rolls back any partial change when
 OPERATOR signals, e.g. `r' having already deleted the region before
-failing to yank.  Each kill starts its own `kill-ring' entry."
+failing to yank.  Each kill starts its own `kill-ring' entry.  Then
+pulse the resulting region unless OPERATOR removed it."
   ;; `kill-region' and `copy-region-as-kill' append to the previous
   ;; kill when `last-command' is `kill-region', so two vice kills in a
   ;; row would otherwise merge; force a fresh entry every time.
-  (let ((last-command nil))
+  (let ((last-command nil)
+        (beg (copy-marker start))
+        (fin (copy-marker end t)))
     (atomic-change-group
-      (funcall operator start end))))
+      (funcall operator start end))
+    (unless (= beg fin)
+      (pulse-momentary-highlight-region beg fin))))
 
 ;; Dispatch
 
