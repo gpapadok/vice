@@ -50,3 +50,46 @@ Findings from a code review of ~vice-mode.el~ (2026-09-24).
 - [X] ~.dir-locals.el~ holds only comments; delete it.
 - [X] Add a ~compile~ target to the ~Makefile~ running the same
   byte-compile as CI, so local checks match CI.
+
+** Ideas
+
+Directions from a usefulness/ergonomics critique. vice's edge over
+native Emacs (~C-M-u C-M-k~, ~M-h~, ~C-M-h~) and ~change-inner~ /
+~expreg~ / ~embrace~ is thin today; these aim to widen it.
+
+*** Cheap wins
+
+- [ ] Pulse the resolved region after applying
+  (~pulse-momentary-highlight-region~), so ~y~ shows what was copied.
+- [ ] Object aliases in the style of targets.vim, so the common cases
+  need no Shift: ~q~ any quote (~(:string nil)~, already supported),
+  ~b~ for ~(~, ~B~ for ~{~.
+- [ ] ~?~ in ~vice-dispatch~ lists the operators and objects.
+- [ ] Signal a ~user-error~ when a count is given to an object that
+  ignores it (~w~ ~s~ ~p~ ~f~ and strings), instead of silently
+  dropping it.
+
+*** Differentiators
+
+- [ ] Region commands as operators: when an operator is an interactive
+  command, set the region and ~call-interactively~ it, so any
+  ~*-region~ command plugs in. Candidate defaults Vim lacks: narrow,
+  fill, up/downcase, eval-region, shell-command-on-region (filter),
+  query-replace inside the object, align.
+- [ ] Seek forward (targets.vim): when point is not inside the object,
+  use the next one on the line; optional ~n~ / ~l~ modifiers for
+  next/last.
+- [ ] Change/delete surrounding delimiters (~cs"'~, ~ds(~), which
+  complements the wrap operator.
+- [ ] Repeat the last operation via ~repeat-mode~ or a
+  ~vice-repeat~ command.
+
+*** Later
+
+- [ ] Remote operations: act on an object at an ~avy~ target without
+  moving point.
+- [ ] Repeated ~v a m~ grows the selection outward, like ~expreg~.
+- [ ] More objects: line, buffer, comment; argument and tag via
+  tree-sitter.
+- [ ] Buffer-local operators and objects per major mode (e.g. ~$~ for
+  LaTeX math).
