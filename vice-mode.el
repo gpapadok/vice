@@ -291,10 +291,10 @@ point."
            (mchar (read-char-exclusive (format "vice %s [a/i]:" op-str)))
            (modifier (pcase mchar
                        (?a 'a) (?i 'i)
-                       (_ (user-error "vice: expected `a' or `i'"))))
+                       (_ (user-error "vice: Expected `a' or `i'"))))
            (object (read-char-exclusive (format "vice %s%c:" op-str mchar)))
            (bounds (or (vice--object-bounds object modifier count)
-                       (user-error "vice: no %s object at point"
+                       (user-error "vice: No %s object at point"
                                    (single-key-description object)))))
       (vice--apply operator (car bounds) (cadr bounds)))))
 
