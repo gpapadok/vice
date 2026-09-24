@@ -76,14 +76,29 @@ current syntax table, and is nil at the end of the buffer."
   (let ((c (char-after pos)))
     (and c (eq (char-syntax c) ?\())))
 
-(defun vice--pair-open-positions ()
+(defun vice--pair-open-positions (ppss)
   "Return positions of enclosing opening delimiters, innermost first.
-When point sits on an opening delimiter it is treated as the innermost
-enclosing pair."
-  (let ((opens (reverse (nth 9 (syntax-ppss)))))
+PPSS is a `parse-partial-sexp' state for point.  When point sits on an
+opening delimiter it is treated as the innermost enclosing pair."
+  (let ((opens (reverse (nth 9 ppss))))
     (if (vice--open-delimiter-p (point))
         (cons (point) opens)
       opens)))
+
+(defun vice--pair-syntax-table (open)
+  "Return a syntax table where OPEN has paren syntax, or nil.
+Nil means OPEN already has open-paren syntax in the current table.
+Otherwise return a copy of `(syntax-table)' with OPEN given syntax
+class \"(\" matched to its standard closing delimiter, and that closing
+delimiter given class \")\" matched back to OPEN."
+  (unless (eq (char-syntax open) ?\()
+    (let ((close (with-syntax-table (standard-syntax-table)
+                   (matching-paren open))))
+      (when close
+        (let ((table (copy-syntax-table (syntax-table))))
+          (modify-syntax-entry open (string ?\( close) table)
+          (modify-syntax-entry close (string ?\) open) table)
+          table)))))
 
 (defun vice--sexp-bounds (start modifier)
   "Return (START END) for the sexp beginning at START, per MODIFIER.
@@ -102,14 +117,20 @@ MODIFIER is `a' to include the delimiters or `i' for their contents.
 OPEN, when non-nil, is the opening-delimiter character to seek; otherwise
 the nearest enclosing pair of any type is used.  COUNT ascends COUNT
 levels (default 1)."
-  (let* ((positions (vice--pair-open-positions))
-         (positions (if open
-                        (seq-filter (lambda (p) (eq (char-after p) open))
-                                    positions)
-                      positions))
-         (start (nth (1- (or count 1)) positions)))
-    (when start
-      (vice--sexp-bounds start modifier))))
+  (let* ((table (and open (vice--pair-syntax-table open)))
+         (compute (lambda (ppss)
+                    (let* ((positions (vice--pair-open-positions ppss))
+                           (positions (if open
+                                          (seq-filter (lambda (p) (eq (char-after p) open))
+                                                      positions)
+                                        positions))
+                           (start (nth (1- (or count 1)) positions)))
+                      (when start
+                        (vice--sexp-bounds start modifier))))))
+    (if table
+        (with-syntax-table table
+          (funcall compute (save-excursion (parse-partial-sexp (point-min) (point)))))
+      (funcall compute (syntax-ppss)))))
 
 (defun vice--string-bounds (modifier &optional quote)
   "Return (START END) of the string enclosing point, or nil.
