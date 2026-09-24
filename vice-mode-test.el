@@ -56,6 +56,21 @@ Run in a temp buffer holding BEFORE with point at POSITION, in
   (should (null (vice-test--pair-bounds "  foo bar" 4 'a)))
   (should (null (vice-test--pair-bounds "(foo bar)" 10 'a))))
 
+(ert-deftest vice--pair-bounds-brace-test ()
+  ;; "{" in `emacs-lisp-mode' has symbol syntax, so resolving it needs
+  ;; a temporary syntax table. Verify the cache is not poisoned.
+  (vice-test--with-buffer "(foo (bar)) a { b c } d" 18
+    ;; prime cache at point 18 (inside braces at 15, 21)
+    (should (= 0 (car (syntax-ppss 18))))
+    ;; resolve braces with explicit delimiter
+    (should (equal (vice--pair-bounds 'a ?\{) '(15 22)))
+    (should (equal (vice--pair-bounds 'i ?\{) '(16 21)))
+    ;; cache must not be poisoned; verify it's still 0
+    (should (= 0 (car (syntax-ppss 18))))
+    ;; move to a different position and resolve its pair
+    (goto-char 8)
+    (should (equal (vice--pair-bounds 'a) '(6 11)))))
+
 (defun vice-test--object-bounds (before position object modifier &optional count)
   "Return `vice--object-bounds' for OBJECT MODIFIER COUNT.
 Run in an `emacs-lisp-mode' temp buffer holding BEFORE with point at
