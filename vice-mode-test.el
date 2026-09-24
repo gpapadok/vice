@@ -318,11 +318,17 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
       (should (string-search (char-to-string (car e)) help)))))
 
 (ert-deftest vice-dispatch-help-test ()
-  ;; ? creates the *vice help* buffer and returns without further input
-  (vice-test--with-buffer "foo" 1
-    (let ((unread-command-events (listify-key-sequence "?")))
-      (vice-dispatch)
-      (should (get-buffer "*vice help*")))
-    (kill-buffer "*vice help*")))
+  ;; ? at any prompt shows help, then the operation continues.
+  (pcase-dolist (`(,text ,pos ,keys ,after)
+                 '(("foo bar" 2 "?diw" " bar")
+                   ("foo bar" 2 "d?iw" " bar")
+                   ("foo bar" 2 "di?w" " bar")
+                   ("(foo (bar))" 8 "2?da(" "")))
+    (unwind-protect
+        (progn
+          (should (equal (car (vice-test--dispatch text pos keys)) after))
+          (should (get-buffer "*vice help*")))
+      (when (get-buffer "*vice help*")
+        (kill-buffer "*vice help*")))))
 
 ;;; vice-mode-test.el ends here
