@@ -64,7 +64,7 @@ native Emacs (~C-M-u C-M-k~, ~M-h~, ~C-M-h~) and ~change-inner~ /
 - [X] Object aliases in the style of targets.vim, so the common cases
   need no Shift: ~q~ any quote (~(:string nil)~, already supported),
   ~b~ for ~(~, ~B~ for ~{~.
-- [ ] ~?~ in ~vice-dispatch~ lists the operators and objects.
+- [X] ~?~ in ~vice-dispatch~ lists the operators and objects.
 - [X] Signal a ~user-error~ when a count is given to an object that
   ignores it (~w~ ~s~ ~p~ ~f~ and strings), instead of silently
   dropping it.

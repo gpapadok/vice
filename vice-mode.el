@@ -268,6 +268,28 @@ pulse the resulting region unless OPERATOR removed it."
 
 ;; Dispatch
 
+(defun vice--spec-description (spec)
+  "Return a short description of the provider SPEC, e.g. \"pair (\"."
+  (pcase-let ((`(,kind ,arg) spec))
+    (format "%s %s" (substring (symbol-name kind) 1)
+            (cond ((null arg) "any")
+                  ((characterp arg) (char-to-string arg))
+                  (t arg)))))
+
+(defun vice--help-text ()
+  "Return a string listing the operators and objects.
+Operators show their function's first docstring line; objects show
+their provider specs."
+  (format "Operators\n%s\n\nObjects\n%s"
+          (mapconcat (lambda (e)
+                       (format "%s  %s" (single-key-description (car e))
+                               (car (split-string (documentation (cdr e)) "\n"))))
+                     vice-operator-alist "\n")
+          (mapconcat (lambda (e)
+                       (format "%s  %s" (single-key-description (car e))
+                               (mapconcat #'vice--spec-description (cdr e) ", ")))
+                     vice-object-alist "\n")))
+
 (defun vice--operator-keys ()
   "Return the operator characters as a display string."
   (mapconcat (lambda (e) (char-to-string (car e))) vice-operator-alist ""))
@@ -291,29 +313,33 @@ The operator is one of `vice-operator-alist' (d y ; v r =), the
 modifier is `a' (around) or `i' (inside), and the object is a key in
 `vice-object-alist'.  A numeric prefix ARG, or leading digits, sets the
 count where the object supports it; an error is signaled otherwise.
+Typing `?' as the operator lists the operators and objects.
 \\[keyboard-quit] aborts at any point."
   (interactive "P")
   (pcase-let* ((char (read-char-exclusive (format "vice [%s]:" (vice--operator-keys))))
                (`(,count . ,char) (if arg
                                        (cons (prefix-numeric-value arg) char)
                                      (vice--read-count char))))
-    (let* ((operator (or (cdr (assq char vice-operator-alist))
-                          (user-error "vice: %s is not an operator"
-                                      (single-key-description char))))
-           (op-str (char-to-string char))
-           (mchar (read-char-exclusive (format "vice %s [a/i]:" op-str)))
-           (modifier (pcase mchar
-                       (?a 'a) (?i 'i)
-                       (_ (user-error "vice: Expected `a' or `i'"))))
-           (object (read-char-exclusive (format "vice %s%c:" op-str mchar)))
-           (specs (cdr (assq object vice-object-alist))))
-      (when (and count (not (assq :pair specs)))
-        (user-error "vice: Object %s does not accept a count"
-                    (single-key-description object)))
-      (let ((bounds (or (vice--object-bounds object modifier count)
-                        (user-error "vice: No %s object at point"
-                                    (single-key-description object)))))
-        (vice--apply operator (car bounds) (cadr bounds))))))
+    (if (eq char ??)
+        (with-help-window "*vice help*"
+          (princ (vice--help-text)))
+      (let* ((operator (or (cdr (assq char vice-operator-alist))
+                            (user-error "vice: %s is not an operator"
+                                        (single-key-description char))))
+             (op-str (char-to-string char))
+             (mchar (read-char-exclusive (format "vice %s [a/i]:" op-str)))
+             (modifier (pcase mchar
+                         (?a 'a) (?i 'i)
+                         (_ (user-error "vice: Expected `a' or `i'"))))
+             (object (read-char-exclusive (format "vice %s%c:" op-str mchar)))
+             (specs (cdr (assq object vice-object-alist))))
+        (when (and count (not (assq :pair specs)))
+          (user-error "vice: Object %s does not accept a count"
+                      (single-key-description object)))
+        (let ((bounds (or (vice--object-bounds object modifier count)
+                          (user-error "vice: No %s object at point"
+                                      (single-key-description object)))))
+          (vice--apply operator (car bounds) (cadr bounds)))))))
 
 ;; Minor mode
 

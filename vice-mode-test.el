@@ -307,4 +307,22 @@ Return (BUFFER-STRING POINT).  Run in an `emacs-lisp-mode' temp buffer."
   (vice-test--with-buffer "(defun foo () 1)" 8
     (should (equal (vice--object-bounds ?f 'a) '(1 17)))))
 
+(ert-deftest vice--help-text-test ()
+  ;; help-text contains every operator and object key
+  (let ((help (vice--help-text)))
+    ;; All operator keys appear in the help text
+    (dolist (e vice-operator-alist)
+      (should (string-search (char-to-string (car e)) help)))
+    ;; All object keys appear in the help text
+    (dolist (e vice-object-alist)
+      (should (string-search (char-to-string (car e)) help)))))
+
+(ert-deftest vice-dispatch-help-test ()
+  ;; ? creates the *vice help* buffer and returns without further input
+  (vice-test--with-buffer "foo" 1
+    (let ((unread-command-events (listify-key-sequence "?")))
+      (vice-dispatch)
+      (should (get-buffer "*vice help*")))
+    (kill-buffer "*vice help*")))
+
 ;;; vice-mode-test.el ends here

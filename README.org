@@ -77,6 +77,7 @@ The prefix key (~vice-key-prefix~, default ~C-c v~) runs
   contents only), as in Vim's ~da(~ vs ~di(~.
 - ~object~ — what to act on.
 
+Type ~?~ instead of an operator to list all operators and objects.
 ~C-g~ aborts at any point. Examples (with the default prefix):
 
 | Keys            | Effect                                      |
